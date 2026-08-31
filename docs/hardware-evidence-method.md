@@ -27,7 +27,7 @@
 | UM6619 | 直接接 CPU bus、控制 68k reset/halt/arbitration/IRQ、Work RAM selects、sound RAM、手把、stereo analog 與 UM6618／卡帶訊號 | 65C02 driver、MAME sound core、Bcan trace、analog capture | 可確認它兼具 system controller／APU／I/O；PCM register 與 IRQ 多數可實作 |
 | UM6650 | 卡帶 bus 與 lockout 相關 pins、16-byte key dump | 68k IPL producer／consumer、Bcan ports、實機量測 `$09/$0C` 外部 pins | 開機授權行為足夠；完整電氣協定仍不完整 |
 | 74F08/74F32/74LS164/7406/74F14 | 每個 gate 與 controller pin 的完整連線 | 標準 74xx truth table、UM6619 I/O 時序 | 可重建 shift／latch 行為，不必逐 transistor 模擬 |
-| UM70C171 palette DAC | UM6618 的 D0–7、RS0/1、RD/WR、PCLK、BLANK 與 P0–7 連線 | UM70C171 datasheet、畫面／示波器驗證 | host RGB framebuffer 足夠；精確類比波形另計 |
+| U3 `UM70C188` RAMDAC | UM6618 的 D0–7、RS0/1、RD/WR、PCLK、BLANK 與 P0–7 連線 | UM70C171 pin-compatible datasheet、UM70C188 command／pixel-mode trace | indexed palette 可做；特殊 direct-color path 待證 |
 | LF347 與輸出網路 | UM6619 `AUDIO_L/R` 到放大／濾波元件的路徑 | 元件值、實機增益／頻率響應量測 | 可做合理混音近似，不足以宣稱逐波形一致 |
 
 ## 3. 本輪由接線升格的結論
@@ -66,6 +66,8 @@ SystemBus arbitration、Work RAM byte lane、65C02／sound RAM ownership 放在 
 - UM6650 `$09/$0C` 的完整外部電氣時序；
 - 兩顆客製 ASIC 間未命名 pins（如 `6619_29`）的方向、封包與時序；
 - palette DAC、音訊放大器與 NTSC encoder 的逐波形輸出。
+
+U3 的詳細證據與 `$F001F0` 特殊像素模式假說見 [palette-dac.md](palette-dac.md)。
 
 這些項目應改用「接線限定候選範圍，再由 ROM consumer／Bcan trace／實機量測定案」，不可把
 Mega Drive、Neo Geo 或其他 Motorola 68000 平台的客製 ASIC 行為直接移植。

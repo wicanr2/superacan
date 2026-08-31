@@ -40,7 +40,7 @@
 | U9 `MC68HC000P10` | 16/32-bit 68000 系列主 CPU；16-bit data、24-bit address bus | 必要 | `CPU.sch` 絲印／符號 (p)；Bcan 核心與時脈為 (a) |
 | U12 `UM6618` | 視訊／系統 ASIC；接 CPU bus、VRAM、palette DAC、主振盪器及 UM6619 訊號 | 必要 | `PPU.sch` (p)；暫存器主要來自 MAME (b) 與 Bcan (a) |
 | U10 `UM6619` | 音效、W65C02 執行環境、sound RAM、手把／IRQ／DMA 與類比音訊介面 | 必要 | `APU.sch` (p)；音效模型及遊戲驅動資料流為 (a)+(b) |
-| U3 `UM70C188` | palette／三路 DAC 介面；早期板級筆記稱與 `UM70C171` 同類 | 數位色彩必要；類比波形可近似 | `PPU.sch` 與早期板級筆記 (p)；未找到 UM70C188 原廠資料表或獨立公開模擬器 |
+| U3 `UM70C188` | palette／RAMDAC；UM6618 提供 P0–7、PCLK、D0–7、RS0/1、RD/WR、BLANK | 數位色彩必要；類比波形可近似 | `PPU.sch` (p)；UM70C171 原廠資料表只支持 pin-compatible 基本介面，UM70C188 特殊模式待查 |
 | U4 `KA2195D` | Samsung NTSC RGB encoder，接 RGB、composite sync、音訊 buffer 與 composite output | 一般 framebuffer 模擬可省略；精確 composite 輸出才需要 | `PPU.sch` (p)；[KA2195D 資料表](https://consolemods.org/wiki/images/8/87/KA2195D.PDF) |
 | U13 `53.693175 MHz` oscillator | 主振盪器 MCLK | 必要 | `PPU.sch`／板照 (p)；CPU 分頻以 Bcan (a) 為準，不採 MAME TODO 值 |
 | U1/U2 `UM62256` | 兩顆 32K×8，組成 64 KiB、16-bit Work RAM | 必要 | `CPU.sch` (p)；`$FC0000–$FCFFFF` 為 (a) |
@@ -85,7 +85,7 @@ Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatib
 | UM6619 | [MAME `umc6619_sound.cpp`](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6619_sound.cpp)／[header](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6619_sound.h) | 16 PCM voices、pitch、wave address/length、stereo volume、timer、DMA IRQ、44.744 kHz stream | envelope 4 bytes、reg `$09/$15/$16` 與 DMA completion 仍部分未知；須以本庫遊戲驅動分析修正。`superacan-web` 的 channel 11–15 人工 decay 是消噪 heuristic，不是硬體 ADSR 證據 |
 | UM6650 | [MAME `umc6650.cpp`](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6650.cpp)＋[splash5 替代板研究](https://github.com/splash5/superacan-notes/tree/63731a2202ffa1ad829c49da8804a05b07a5943b) | 16-byte ROM key、`$40–$5F` RAM、7-bit address latch | 以 IPL/Bcan (a) 為準：`$EB0D03` 是位址、`$EB0D01` 是資料；MAME `read/write(offset)` 角色相反。`$09/$0C` 輸出仍未完整建模 |
 | 卡帶／SRAM | [MAME Super A'Can bus](https://github.com/mamedev/mame/tree/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/devices/bus/supracan) | raw `.bin`、越界讀 `0xFFFF`、battery save | MAME 只接受單檔 `.bin` 骨架；Bcan 的雙部分卡帶、word-swap 載入與固定 32768-byte SRAM 契約須另補 |
-| Palette／UM70C188 | MAME `palette_device::xBGR_555` | 256-entry digital palette 與 framebuffer 色彩 | 這只是玩家畫面近似，不是 UM70C188 類比 DAC 的電氣模擬 |
+| Palette／UM70C188 | MAME `palette_device::xBGR_555`＋[UM70C171 原廠資料表](https://www.bitsavers.org/components/umc/UM70C171.pdf)＋[palette-dac.md](palette-dac.md) | 256-entry digital palette；基本 address/color/mask、PCLK pipeline 與 blanking 參考 | 實裝是 UM70C188；high／true-color command mode 與 `$F001F0` bits 3–4 關係未證，不可用 UM70C171 取代完整行為 |
 | KA2195D | Samsung 資料表；若只輸出 RGB framebuffer 可不建 device | 想模擬 NTSC composite 時參考 pin、carrier、sync、RGB matrix | 不應把一般 CRT shader 稱為 KA2195D 精確模擬；目前沒有找到 Super A'Can 專用公開實作 |
 | 手把 | MAME input/shift code＋`superacan-notes` 的 SNES adapter mapping | latch、clock、16-bit active-low shift stream | A'Can 與 SNES 的 A/B/X/Y、Start/Select mapping 不同；Bcan UI 的 C/Z 名稱也不能當實機按鍵絲印 |
 
@@ -96,10 +96,13 @@ Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatib
 並有 `BLANK`、pixel clock 與類比 RGB 輸出。這能提供宿主若要重建 palette DAC pipeline 時的
 介面範例，但目前只能列為**同族參考**：
 
-- 板級筆記「UM70C188 與 UM70C171 同類」不是 pin-compatible 或 register-compatible 的證明；
+- `PPU.sch` 已證明兩者基本 P0–7、D0–7、RS0/1、RD/WR、PCLK、BLANK pin path 相符，
+  但仍不是完整 register-compatible 的證明；
 - A'Can 已觀察到的 256-entry `xBGR555` 寫入與畫面結果仍以 UM6618／Bcan／MAME (a)+(b) 為準；
 - 不可把 UM70C171 的 18-bit palette、pixel mask register 或 6-bit DAC 精度直接宣稱為
-  UM70C188 已確認規格；需要 UM70C188 資料表、走線或實機訊號才能升格。
+  UM70C188 已確認規格；其 direct-color command sequence 需要原廠資料表或實機訊號才能升格。
+
+深入結果與 `$F001F0` 假說見 [palette-dac.md](palette-dac.md)。
 
 ### 3.2 `superacan-web` 的適用邊界
 

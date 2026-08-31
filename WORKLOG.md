@@ -107,3 +107,16 @@
   producer／consumer 或實機證據，以及不可從其他 68000 主機類推的界線。
 - 新升格的板級結論：UM6619 接完整 68k bus/control/arbitration，並產生 Work RAM byte-lane
   selects、獨占 sound RAM bus；因此它是 APU／I/O 之外的主要 system／memory controller。
+
+## 2026-08-31：UM70C188／palette DAC 深度搜尋
+
+- 找到 Bitsavers 保存的 UMC `UM70C171` 15 頁原廠 preliminary datasheet，記錄 SHA-256，
+  擷取 palette address/color/mask、auto-increment、PCLK pipeline、blanking 與 6-bit DAC 契約。
+- 與 `PPU.sch` 逐 pin 比對：實裝 U3 是 `UM70C188`，UM6618 直接驅動 P0–7、PCLK、D0–7、
+  RS0/1、RD/WR、BLANK；Eagle symbol 沿用 UM70C171 不代表內部功能相同。
+- 同期 VGA RAMDAC 技術資料把 UM70C188 列為 24-bit／TrueColor 類型；MAME 對 `$F001F0`
+  bit 4 只提示 special pixel mode 而未實作。兩者關係列為假說，新增 `docs/palette-dac.md`，
+  不將其升格成已證實 A'Can 顯示模式。
+- 在 Capstone Docker 中掃描九款 word-swap 正規化 ROM：全部都有 `$F001F0` reference；
+  The Son of Evil `$74C86` 明寫 `$0009`，證實正式遊戲會啟用 MAME 尚未使用的 pixel-mode
+  bit 3。下一個窄任務是該 call path 與畫面／pixel bus trace，而非繼續猜 UM70C188 規格。

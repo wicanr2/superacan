@@ -123,7 +123,10 @@ CPU 寫 UM6618 registers / 128 KiB 可見 VRAM / 256-entry palette
   不需出現在一般 framebuffer path，因此這只是 digital color approximation。
 - 若要新增可選的類比輸出 path，可參考同族 UM70C171 的 256×18-bit palette、pixel mask、
   `BLANK` 與三路 6-bit DAC pipeline，再接 KA2195D 的 RGB／sync 輸入；但在 UM70C188 相容性
-  未證實前，這只能標為研究模式，不能取代已驗證的 `xBGR555` framebuffer path。
+  未證實前，這只能標為研究模式，不能取代已驗證的 `xBGR555` framebuffer path。UM70C188
+  可能具 high／true-color path；The Son of Evil 會寫 `$0009`、確實啟用 pixel-mode bit 3，
+  但其與 direct color 的關係仍是假說，見
+  [palette-dac.md](palette-dac.md)。
 - vpos、奇偶幀、vblank／raster pending 都屬 device state；讀取特定 status register 或 68k
   interrupt acknowledge 才解除對應事件。
 
