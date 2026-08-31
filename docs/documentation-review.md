@@ -8,7 +8,7 @@
 | 正式軟體目錄 | 本輪補齊 F001–F012、標題、serial、hash、NVRAM 提示 | MAME `hash/supracan.xml`（CC0） | 對本地九款建立正常玩家路徑矩陣 |
 | UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ 定義本輪補強 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
 | UM6619 | 主要 PCM／DMA／timer 可實作 | MAME sound device＋本地遊戲 driver | envelope／release 仍需實機或更多 driver consumer |
-| UM70C188 | 型號與數位接線已知；找到 UM70C171 原廠資料表；F003 寫 `$F001F0=$0009` 啟用 bit 3 | Bitsavers UMC datasheet＋`PPU.sch`＋本地 ROM | trace F003 `$74C86` 畫面與 pixel bus，確認特殊 mode 是否走 direct-color |
+| UM70C188 | 型號與數位接線已知；F003 會在 `$0001/$0009` 間切換 pixel bit 3，並經 frame shadow 回寫 | Bitsavers UMC datasheet＋`PPU.sch`＋本地 ROM | 對六個 F003 producer 做 frame／畫面 trace，確認特殊 mode 是否走 direct-color |
 | 卡帶／SRAM | raw ROM、雙 part、32 KiB fallback 已知 | MAME software list＋板級 schematic | 實拍各型卡帶 PCB，確認哪些 serial 真有 SRAM／電池 |
 | 主機板 | 16000-2A schematic 已證實 UM6618 `VRAM_A17` 接 SRAM `A16` | `superacan-notes` `PPU.sch` | 以 ROM consumer／logic capture 找出誰產生最高位；不再把配線列為未知 |
 | 類比輸出 | 元件與近似邊界已知 | UM70C171、KA2195D datasheet | 要精確只能量測 UM70C188／實機 composite capture |

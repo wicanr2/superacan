@@ -67,6 +67,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [硬體組成與逐晶片模擬實作參考](docs/hardware-implementation-sources.md)
 - [逐晶片模擬實作指南](docs/chip-emulation-guide.md)
 - [UM70C188 調色盤／RAMDAC 研究](docs/palette-dac.md)
+- [F003 UM6618 pixel-mode producer](docs/f003-video-mode.md)
 - [軟體模擬資料充分度評估](docs/emulation-readiness-assessment.md)
 - [文件完整度複查與可補來源](docs/documentation-review.md)
 - [遊戲音效驅動與通訊協定](docs/sound-driver.md)

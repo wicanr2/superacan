@@ -71,7 +71,7 @@
 | `$160–$17E` | Tilemap 3／第四 normal layer（MAME 作者逐遊戲筆記已觀察；目前 driver／本地 oracle 尚未接入） |
 | `$180–$19E` | ROZ 層：tile mode、scrollx/scrolly（32-bit）、係數 A/B/C/D、base addr、tile bank、3 個逐行參數表位址 |
 | `$1D0–$1DE` | Window 0/1：control、start addr、scrollx、scrolly |
-| `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；FRC control/frequency 是 `$E90014/$E90016`，不在 UM6618 window |
+| `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；F003 實際在 `$0001/$0009` 間切換 bit3；FRC control/frequency 是 `$E90014/$E90016`，不在 UM6618 window |
 
 Tilemap flags：bit15-13 優先度、bit11-8 尺寸（16×16/32×32/64×32/128×32/64×64
 tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。

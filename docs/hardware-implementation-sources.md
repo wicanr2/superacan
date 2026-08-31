@@ -103,6 +103,8 @@ Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatib
   UM70C188 已確認規格；其 direct-color command sequence 需要原廠資料表或實機訊號才能升格。
 
 深入結果與 `$F001F0` 假說見 [palette-dac.md](palette-dac.md)。
+F003 的 `$0001↔$0009` producer、shadow 與動態斷點見
+[f003-video-mode.md](f003-video-mode.md)。
 
 ### 3.2 `superacan-web` 的適用邊界
 

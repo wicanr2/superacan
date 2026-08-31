@@ -120,3 +120,6 @@
 - 在 Capstone Docker 中掃描九款 word-swap 正規化 ROM：全部都有 `$F001F0` reference；
   The Son of Evil `$74C86` 明寫 `$0009`，證實正式遊戲會啟用 MAME 尚未使用的 pixel-mode
   bit 3。下一個窄任務是該 call path 與畫面／pixel bus trace，而非繼續猜 UM70C188 規格。
+- 續追 F003 producer：`$74C46` 清 512-byte palette 後寫硬體 `$0009`，`$74D06` 同步建立
+  `$FFFF9F20` shadow；`$27EE` 在 dirty flag bit 7 時回寫 `$F001F0`。另找到三處切 `$0001`、
+  三處切回 `$0009`，證明 bit 3 是可切換狀態。新增 `docs/f003-video-mode.md` 與動態斷點契約。

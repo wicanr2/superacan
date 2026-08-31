@@ -96,3 +96,6 @@ Formosa Duel、Speedy Dragon、Super Taiwanese Baseball League 與 Journey 另�
 載入的動態寫值，不能靠 immediate scan 列舉完整集合。The Son of Evil 的 `$0009` 把研究目標
 由「是否有遊戲使用」縮小為具名 consumer；下一步應 trace `$74C86` 所在初始化路徑、對應畫面
 與 P0–P7/PCLK framing。這仍不證明 bit 3 就是 direct color，但已證明特殊 pixel bit 不是閒置。
+
+初始化、frame update shadow 與 `$0001↔$0009` 切換詳見
+[f003-video-mode.md](f003-video-mode.md)。
