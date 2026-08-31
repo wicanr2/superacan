@@ -4,6 +4,8 @@
 可以參考哪個公開實作。它是元件與來源索引；暫存器的原始位址仍以
 [memory-map.md](memory-map.md)為準，音效命令與資料流以
 [sound-driver.md](sound-driver.md)為準。
+實際排程、reset、IRQ、像素合成與 PCM 演算法見
+[逐晶片模擬實作指南](chip-emulation-guide.md)。
 
 ## 1. 證據契約與本次網路快照
 
