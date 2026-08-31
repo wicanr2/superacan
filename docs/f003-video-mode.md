@@ -1,6 +1,6 @@
 # F003《惡魔之子》UM6618 pixel-mode producer
 
-更新日期：2026-08-31。本文保存 `$F001F0` pixel／GFX mode 的具名 ROM producer；不把
+更新日期：2026-09-01。本文保存 `$F001F0` pixel／GFX mode 的具名 ROM producer；不把
 `pixel_mode` 導覽名稱當成已證實的 UM6618／UM70C188 內部語意。
 
 ## 1. 輸入與位址空間
@@ -85,8 +85,8 @@ MAME 只保存 `m_pixel_mode = data & 0x18`，render path 沒有讀取它。下�
 
 | Frame | Value | PC | 與靜態證據的關係 |
 |---:|---:|---:|---|
-| 20 | `$0009` | `$FFFFDA5C` | Work RAM mirror 中執行的早期更新／轉交程式；尚未定位原始 copy source |
-| 211 | `$0001` | `$FFFFDB90` | Work RAM mirror 程式切除 bit 3；尚未定位原始 copy source |
+| 20 | `$0009` | `$FFFFDA5C` | 執行期產生的 Work RAM 程式；producer 見下節 |
+| 211 | `$0001` | `$FFFFDB90` | 執行期產生的 Work RAM 程式；producer 見下節 |
 | 216 | `$0009` | `$00074C86` | 與開機初始化 immediate producer 完全相符 |
 | 219 | `$0009` | `$000027EE` | 與 shadow consumer 完全相符 |
 | 255 | `$0001` | `$000027EE` | 動態確認 shadow 已被某 producer 改成 `$0001` |
@@ -99,7 +99,37 @@ frame 200 截圖仍是 A'Can logo；frame 212、217、220、256 為黑色過場�
 輸出不完整」的 software-observed 證據，但不能把缺圖唯一歸因於 bit 3：同一 oracle 尚缺第四
 normal layer、部分 priority／ROZ 等行為。必須做同狀態 bit 3 A/B 才能建立因果。
 
-動態 trace 已證實 `$0001↔$0009` 的實際硬體寫入與 `$27EE` consumer；下一步縮成兩件事：
+### 6.1 Work RAM producer 來源
 
-1. 找 `$FFFFDA5C/$FFFFDB90` Work RAM code 的卡帶 copy source，補齊原始 ROM 位址；
+把探針擴充為同列保存 PC 起八個 16-bit words，得到兩段 RAM code 簽章：
+
+| 執行位址 | 指令 words | ROM 比對 |
+|---:|---|---|
+| `$FFFFDA5C` | `33FC:0009:00F0:01F0:33FC:120E:00F0:0008` | 前五個 words 與 `$74C86` 相同，後續立即值不同；不是逐 byte 原樣 copy |
+| `$FFFFDB90` | `33FC:0001:00F0:01F0:41F9:00F4:0000:303C` | word-swap 後 ROM 無完整簽章 |
+
+再窄記錄 Work RAM `$DA50–$DA6F`、`$DB80–$DBAF` 的 byte writes：前者在 frame 15、後者
+在 frame 16 生成；兩段目標 byte 均由 `$FFFF80B6` 寫入。該寫入迴圈開頭 words 為
+`12C3:60E4:0028:002C`，可在 word-swap 後卡帶 ROM `$00073A54` 精確找到。frame 212 時
+`$00074BF4` 所在初始化流程又將兩段清零。
+
+`$7395E–$7399C` 另證實先把 `$7399E` 起的 `$19C` bytes 搬到 Work RAM；因此 ROM
+`$73A54` 與 RAM `$FFFF80B6` 的位移皆為 `$B6`，是同一解碼器的 ROM／RAM 視圖，而不是
+兩套偶然相同的程式。該解碼器具有可直接由指令證實的兩類輸出：
+
+- `$73A3E–$73A54` 從 bitstream 走表解碼，leaf byte 由 `move.b d3,(a1)+` 輸出；
+- `$73A6C–$73B36` 對部分 symbol 跳入 `$73A84` 起的短距離重複與 `$73B2A` 起的
+  backward-copy 路徑，從已輸出資料回填。
+
+因此可**已證實**這不是純 relocation，而是「entropy-coded literal＋LZ 類 backward copy」
+的解壓路徑；「Huffman」名稱目前只列**強推論**，因樹表建構雖明顯，尚未完整形式化碼表格式。
+目前也尚未追出每次呼叫的 source pointer、destination end／長度與壓縮資料邊界，不能宣稱檔案
+格式已完整解出。這訂正先前「尚未定位 copy source」：已定位解碼器及演算法家族，但尚未
+定位兩次輸入資料流。所有 ROM 位址沿用本文 word-swap 後低區 CPU address 基準；RAM PC
+則保留實際 `$FFFFxxxx` 執行位址。
+
+動態 trace 已證實 `$0001↔$0009` 的實際硬體寫入、`$27EE` consumer 與 RAM code producer；
+下一步縮成兩件事：
+
+1. 追 RAM 解碼器 caller 的 A0 source、A1 destination 與終止條件，界定兩段壓縮資料；
 2. 在同一 save state 對 bit 3 做一次性 A/B renderer probe，比較 frame／VRAM／palette hashes。
