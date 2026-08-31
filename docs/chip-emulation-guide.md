@@ -119,6 +119,9 @@ CPU 寫 UM6618 registers / 128 KiB 可見 VRAM / 256-entry palette
 - 由最低 priority 7 往最高 0 合成 tilemap、ROZ、window，再以 sprite priority 比較覆蓋。
 - palette entry 為 `xBGR555`；目前直接擴為 8-bit RGB。UM70C188 DAC 與 KA2195D NTSC encoder
   不需出現在一般 framebuffer path，因此這只是 digital color approximation。
+- 若要新增可選的類比輸出 path，可參考同族 UM70C171 的 256×18-bit palette、pixel mask、
+  `BLANK` 與三路 6-bit DAC pipeline，再接 KA2195D 的 RGB／sync 輸入；但在 UM70C188 相容性
+  未證實前，這只能標為研究模式，不能取代已驗證的 `xBGR555` framebuffer path。
 - vpos、奇偶幀、vblank／raster pending 都屬 device state；讀取特定 status register 或 68k
   interrupt acknowledge 才解除對應事件。
 
@@ -156,3 +159,7 @@ reg `$A0–$DF` envelope 目前僅保存 readback、未套用；`superacan-web` 
 
 測試通過只證明上述玩家路徑與目前模型一致。未經實機邏輯分析、晶片 decap 或更多 ROM consumer
 證實的內部行為，仍須保留 (b)、strong inference 或 hypothesis 標記。
+
+晶粒逆向方面，UM6619 已有「走線與 cell boundary 約完成 99%」的公開進度說明，但 cell 邏輯
+尚未完成辨識，SiliconRE 仍將 UM6618F／UM6619F 標為 Stalled；在公開 schematic／netlist 出現前，
+不能把這項進度當作閘級 oracle。現階段仍以遊戲 driver 的 register consumer 與玩家路徑驗證為主。
