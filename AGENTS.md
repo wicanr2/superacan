@@ -26,7 +26,8 @@
 - **類型**：第四世代 16 位元家用遊戲機
 - **發售日**：1995-10-25（台灣）
 - **定位**：硬體對標 Sega Mega Drive / Neo Geo 同世代主機；主機與手把外型模仿美版超級任天堂
-- **遊戲**：全中文介面；已發售約 12 款（流通 ROM 約 8 款），另有約 11 款未發售
+- **遊戲**：MAME 固定 catalog 列 F001–F012 共 12 款正式遊戲，並註明已知正式遊戲皆已 dump；
+  本地有其中 9 款。該 catalog 另列 4 個未發售名稱，不把其他來源的「約 11 款」當定案
 - **未實現計畫**：CD-ROM 與類似 Sega 32X 的硬體提升器，均未推出
 
 來源：
@@ -41,16 +42,16 @@
 |---|---|---|
 | 主 CPU | Motorola **MC68HC000P10** @ **10.738635 MHz**（型號為 (p) 板級證據；時脈為 (a) Bcan 反編譯定案；MAME 用 U13/6≈8.95 MHz 為未定案猜測） | 68000 相容、低功耗 CMOS 型號 |
 | 副 CPU | WDC **65C02** @ **3.579545 MHz**（(a) 定案；早期資料誤記 MOS 6502） | 見 §4、docs/sound-driver.md |
-| 主記憶體 | 64 KB Work RAM（另有 256 KB SRAM 一說，待查證） | 來源間不一致 |
+| 主記憶體 | 64 KiB Work RAM | 2×32K×8 板級證據 (p)＋Bcan `$FC0000–$FCFFFF` (a)；舊網頁 256 KiB 說法不採用 |
 | 副記憶體 | 32 KB | |
 | VRAM | 68k 可見視窗 128 KiB；`PCGAM 16000-2A` 板為 2×`UM611024`，物理合計 256 KiB；額外 bank 用途待查證 | 較早板級筆記為 2×`UM61512`、合計 128 KiB，可能有 revision 差異 |
 | DMA | 主機 DMA **2 通道**（(b) MAME 實作；外界流傳 8 組之說待查證） | 另有 UM6618 內部 sprite DMA |
 | 繪圖晶片 | UMC **UM6618**（背景與動畫處理器） | 四層背景、精靈透明/縮放 |
 | 音效晶片 | UMC **UM6619**（音樂與音訊處理、周邊） | |
 | 色彩 | 32768 色中同時顯示 256 色 | |
-| 解析度 | 320×240 為主（一說最高 640×480，待查證） | |
+| 解析度 | 256/320 水平模式；224/240 可視高度（register observation）；常用輸出 320×240 | 未找到 640×480 的 register／實作證據，不列為已知模式 |
 | 精靈 | 最大 256×256 像素 | |
-| 其他晶片 | **UMC6650**（有 16 byte 的 BIOS dump，見 §4） | 功能待查證 |
+| 其他晶片 | **UMC6650**（16-byte key dump） | lockout 開機流程已確認；只剩 `$09/$0C` 外部 pin 語意待查證 |
 
 > 注意：各來源規格互相矛盾處（RAM 容量、解析度、6502 vs 65C02）須以模擬器實作與 BIOS dump 為準逐一查證。
 
@@ -64,18 +65,19 @@
 
 | 檔案 | 大小 | 遊戲 |
 |---|---|---|
-| Boom Zoo (Taiwan).bin | 512 KB | 轟炸動物園 |
+| Boom Zoo (Taiwan).bin | 512 KB | 爆爆動物園（F011） |
 | Formosa Duel (Taiwan).bin | 1 MB | 福爾摩沙大對決 |
 | Journey to the Laugh (Taiwan).bin | 2 MB | 嘻遊記 |
-| Monopoly - Adventure in Africa (Taiwan).bin | 1 MB | 大富翁：非洲冒險 |
-| Sango Fighter (Taiwan).bin | 3 MB | 三國志武將爭霸 |
+| Monopoly - Adventure in Africa (Taiwan).bin | 1 MB | 非洲探險（F008） |
+| Sango Fighter (Taiwan).bin | 3 MB | 三國志 武將爭霸（F002） |
 | Speedy Dragon (Taiwan).bin | 2 MB | 音速飛龍 |
-| Super Dragon Force (Taiwan).zip | 2 MB（壓縮） | 超級龍虎霸 |
-| Super Taiwanese Baseball League (Taiwan).bin | 2 MB | 超級台灣職棒聯盟 |
-| The Son of Evil (Taiwan).bin | 2 MB | 惡魔之子 |
+| Super Dragon Force (Taiwan).zip | 3 MiB 內容 | **超級光明戰史（F007）**；ZIP／成員檔名誤標，hash 已定案 |
+| Super Taiwanese Baseball League (Taiwan).bin | 2 MB | 超級中華職棒聯盟（F005） |
+| The Son of Evil (Taiwan).bin | 2 MB | 邪惡之子（F003） |
 
-- 中文遊戲名稱對照為**待查證**項目，須以實際 ROM header / 遊戲畫面確認。
-- ROM 格式：raw binary（`.bin`），無 iNES 式標頭（待分析確認）。
+- 完整 F001–F012 catalog、發行商、年份、CRC／SHA 與本地對照見
+  [docs/software-catalog.md](docs/software-catalog.md)。
+- ROM 格式已確認為 raw binary、無模擬器外加標頭、16-bit word-swap。
 
 ## 4. 模擬器分析：Bcan 0.0.8b（`Bcan008b/`）
 

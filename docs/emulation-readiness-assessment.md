@@ -16,7 +16,7 @@ oracle 與純 Go 重寫現況。本文件判斷「資料能支持什麼」，不
 | 讓數款遊戲進入正常可操作畫面 | **已證明可行** | C++ oracle 已讓 Boom Zoo、Monopoly、Speedy Dragon 通過畫面、音樂與按鍵垂直切片 |
 | 重建主要影像／音訊／輸入晶片的軟體可見契約 | **大致足夠** | MAME 提供骨架，Bcan／BIOS／遊戲 driver 已修正關鍵時脈、IRQ、reset、DMA 與 UM6650 差異 |
 | 全部已知 ROM 可玩 | **尚不足** | 本庫有約 9 個映像，正式驗證集中在 3 款；其餘缺正常玩家路徑與長時間回歸 |
-| MAME 等級以上的廣泛相容性 | **尚不足** | C.U.G.、台灣職棒、惡魔之子等 MAME 已知缺陷尚未逐一建立 consumer／畫面證據 |
+| MAME 等級以上的廣泛相容性 | **尚不足** | F005 超級中華職棒聯盟、F003 邪惡之子及 driver 另提的 C.U.G. 等已知缺陷尚未逐一建立 consumer／畫面證據 |
 | 實機精確／逐週期模擬 | **不足** | 無 UM6618／UM6619 完整資料表、公開 netlist、logic analyzer trace 或同狀態實機 capture |
 
 因此目前合理產品聲明應是「研究型、可運行的功能模擬器」，不能寫成「完整模擬」或
@@ -31,7 +31,7 @@ oracle 與純 Go 重寫現況。本文件判斷「資料能支持什麼」，不
 | SystemBus／RAM／ROM | 是；主要 24-bit map、mirror、open bus、SRAM、word-swap 已知 | IPL、DMA、三款 ROM | wait state／bus arbitration 未達硬體級 | **功能型 READY** |
 | UM6650 | 是；key、address/data port、RAM 與 IPL consumer 已知 | 兩款以上 IPL 完成交握與授權 | `$09/$0C` 對外 pin 語意未知 | **開機路徑 CONFORMED；電氣語意未知** |
 | 主 DMA／sprite DMA | 主模式足夠；兩通道與常用 control 已知 | 曾以 word 原子寫入修正雙觸發，三款回歸 | 台灣職棒使用的未模擬 DMA type、精確 bus ownership／完成時間 | **常用途徑 READY；完整模式不足** |
-| UM6618 | 三 tilemap、ROZ、sprite、window 0、palette 與 IRQ 足夠 | 三款截圖；logo、標題、ROZ、sprite 路徑 | 第四層、sprite sizing/clipping、priority/color mix、部分 ROZ table、逐掃描線更新、window 1 | **可用但不完整** |
+| UM6618 | 三個已實作 tilemap、ROZ、sprite、window 0、palette 與 IRQ 足夠；第四層已有 register observation | 三款截圖；logo、標題、ROZ、sprite 路徑 | 第四層 consumer／實作、sprite sizing/clipping、priority/color mix、部分 ROZ table、逐掃描線更新、window 1 | **可用但不完整** |
 | UM6619 | 16 PCM channel、pitch、key、volume、loop、DMA、timer 足夠 | 三款 WAV 非靜音、頻譜、按鍵後場景 | envelope `$A0–$DF`、真實增益／濾波、部分 register 位元 | **可聽功能 READY；音色精度不足** |
 | 手把 | P1/P2 shift 與 direct mode 足夠 | P1 正常 UI 路徑；P2 register 注入 | P2 實際雙人遊戲流程、實體 adapter timing | **功能型 READY** |
 | 視訊／音訊輸出 | RGBX framebuffer、44.744→48 kHz pipeline 足夠 | SDL/headless screenshot/WAV | UM70C188、KA2195D、LF347 類比效果未模擬 | **數位近似 READY** |
@@ -90,9 +90,10 @@ MAME source 是目前最完整的公開硬體行為骨架，但其 driver 自己
 
 ### 4.1 軟體覆蓋不足
 
-現有 ROM inventory 約 9 個映像，但具完整畫面＋音訊＋輸入收據者只有 3 款。至少還需對
-Formosa Duel、Journey to the Laugh、Sango Fighter、Super Dragon Force、Super Taiwanese
-Baseball League、The Son of Evil 分層抽樣。僅能進入 entry point 或顯示一張畫面不算可玩。
+正式 catalog 有 F001–F012；本地 inventory 有其中 9 款，但具完整畫面＋音訊＋輸入收據者
+只有 3 款。至少還需對 Formosa Duel、Journey to the Laugh、Sango Fighter、F007 Super
+Light Saga、Super Taiwanese Baseball League、The Son of Evil 分層抽樣；本地另缺 F009、
+F010、F012。僅能進入 entry point 或顯示一張畫面不算可玩。
 
 ### 4.2 MAME 自己仍列出的硬體缺口
 
@@ -110,7 +111,7 @@ Baseball League、The Son of Evil 分層抽樣。僅能進入 entry point 或顯
 
 在新增更多硬體猜測前，先做軟體相容性垂直抽樣：
 
-1. 固定 9 個 ROM／BIOS 的 SHA-256 與預期入口；
+1. 使用 [software-catalog.md](software-catalog.md) 固定本地 9 款 ROM／BIOS 的 SHA-256 與預期入口；
 2. 每款保存「開機 → 標題 → 可操作畫面」的 input timeline、frame hash、audio hash 與截圖；
 3. 有雙人、存檔或替代驅動的遊戲，各抽一條第二路徑；
 4. 對失敗項保存 bus／IRQ／DMA 最後事件，分類成 implementation、RE 或 dynamic-oracle 缺口；

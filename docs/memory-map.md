@@ -62,19 +62,24 @@
 |---|---|
 | `$00` | Video IRQ flags（讀）；寫入控制中斷（vblank = 68k IRQ4？IRQ 來源見 §6） |
 | `$02` | 目前掃描線（讀） |
-| `$08` | video flags：bit8 X 寬 256/320、bit7/6/5 tilemap0/1/2 enable、bit3 sprite enable、bit2 ROZ enable |
+| `$08` | video flags：bit11 interlace、bit10 global double-height、bit9 overscan（224/240）、bit8 h256/h320；bit7–4 normal layer 1–4、bit3 sprite、bit2 ROZ、bit1/0 window clip 1/2 enable |
 | `$10–$1E` | Sprite DMA：count、dest MSW/LSW、src inc、src MSW/LSW、control |
 | `$20/$22/$24/$26` | sprite base addr（<<2）、sprite count（+1）、mono color、flags（bit0：8bpp/4bpp） |
 | `$100–$10E` | Tilemap 0：tile mode、scrollx、scrolly、base addr（<<1）、mode、linescrollx addr、lineselect addr |
 | `$120–$12E` | Tilemap 1（同格局） |
 | `$140–$14E` | Tilemap 2（同格局） |
+| `$160–$17E` | Tilemap 3／第四 normal layer（MAME 作者逐遊戲筆記已觀察；目前 driver／本地 oracle 尚未接入） |
 | `$180–$19E` | ROZ 層：tile mode、scrollx/scrolly（32-bit）、係數 A/B/C/D、base addr、tile bank、3 個逐行參數表位址 |
 | `$1D0–$1DE` | Window 0/1：control、start addr、scrollx、scrolly |
-| `$1F0` | FRC（free-running counter）相關 |
+| `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；FRC control/frequency 是 `$E90014/$E90016`，不在 UM6618 window |
 
 Tilemap flags：bit15-13 優先度、bit11-8 尺寸（16×16/32×32/64×32/128×32/64×64
 tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
-圖層：3 個 tilemap + 1 個 ROZ + sprite + 2 個 window；色深 8/4/2/1 bpp。
+硬體 target：4 個 normal tilemap + 1 個 ROZ + sprite + 2 個 window；色深 8/4/2/1 bpp。
+固定 MAME driver 與本地 C++ oracle 目前只實作前三個 normal layers。第四層與 `$1F0` bitfield
+來自 MAME driver 作者的逐遊戲 register observation
+[`pergame.md`](https://github.com/angelosa/hw_docs/blob/1b9e8fe813b29f196ff04ca9c194319ced779f4c/funtech_superacan/pergame.md)，
+證據層級仍是研究觀察，不是原廠資料表。
 
 ## 4. DMA（b）
 
@@ -127,10 +132,11 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
 
 ## 6. 中斷（b）
 
-- 68k：**IRQ3** = FRC 計時器；**IRQ4** = 掃描線/raster（`m_irq_mask` bit4）；
-  **IRQ5** = 視訊（line on/off timer）；**IRQ6** = 音效 CPU mailbox；
-  **IRQ7** = vblank 相關（`$F00000` flags）。確切對應仍含 MAME 推測成分，
-  標 **待查證**。
+- 68k：**IRQ1**=expansion、**IRQ2**=cartridge、**IRQ3**=UM6619 host/FRC timer、
+  **IRQ4**=UM6618 horizontal retrace、**IRQ5**=UM6618 fixed-line trigger、
+  **IRQ6**=sound CPU→main mailbox、**IRQ7**=UM6618 vertical retrace。
+  IRQ3–7 有多款 ROM handler／mask 使用觀察；IRQ1/2 尚無本地 consumer。來源為 MAME 作者
+  `pergame.md`，仍標 (b) research observation，而非 confirmed-hardware。
 - 65C02：單一 IRQ 線，6 來源 bitmap 在 `$0411`（見 §5）。
 
 ## 7. 手把硬體位元序（b，16-bit active low）

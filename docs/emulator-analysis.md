@@ -62,7 +62,9 @@
 - **雙部分卡帶**：ZIP 可含兩個數字副檔名部分（`.0` + `.1`）。字串明確指出
   「Super Light Saga」需 `16007.0`（2 MiB）+ `08007.1`（1 MiB）兩個已驗證
   部分；本 repo 的 `Super Dragon Force (Taiwan).zip` 內含
-  `16007 (Taiwan).bin`（2 MB）+ `08002 (Taiwan).bin`（1 MB），屬同一機制。
+  `16007 (Taiwan).bin`（2 MB）+ `08002 (Taiwan).bin`（1 MB）。後續 CRC／SHA-1
+  核對已證明兩者就是 `16007.0`／`08007.1` 的誤命名副本，內容為 F007
+  Super Light Saga；見 [software-catalog.md](software-catalog.md#3-f007-雙部分卡帶訂正)。
 - ROM 以 SHA-256 正規化識別（`rom_sha256=`、`game_identifier=`，
   「The game identifier must be a lower-case SHA-256 value」），
   save state、卡帶存檔、cheat、錄影檔名都綁定此 hash。
@@ -245,8 +247,8 @@ BCAN_CHT_1
 - 每部分有**固定大小與 CRC 驗證**（「ZIP extraction failed cartridge-part
   size or CRC verification」）。
 - 已知配對（模擬器內建白名單）：**Super Light Saga = 16007.0（2 MiB）+
-  08007.1（1 MiB）**；本 repo 的 Super Dragon Force ZIP（16007 (Taiwan).bin
-  2 MB + 08002 (Taiwan).bin 1 MB）同屬此機制。映射方式：.0 為低位、.1 接續
+  08007.1（1 MiB）**；本 repo 誤名為 Super Dragon Force 的 ZIP，其兩個成員
+  hash 已確認就是上述配對。映射方式：.0 為低位、.1 接續
   高位（合計 3 MiB 位於 $000000–$2FFFFF 視圖，無 mapper）。
 - 未找到其他遊戲使用雙部分的證據。
 

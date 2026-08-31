@@ -76,3 +76,16 @@
   的 `RTE`。BIOS 沒有週邊 service routine；遊戲 IRQ handlers 在 overlay 關閉後由卡帶提供。
 - 新模擬風險：`$61E` 關高區 overlay 後仍須執行已預取的 `$620 JMP (A0)`，因此 68000
   prefetch queue 是開機轉交的可觀察契約，不能用無 prefetch 的逐指令重新取碼模型取代。
+
+## 2026-08-31：第二輪文件與網路來源複查
+
+- 固定 MAME `hash/supracan.xml`：補齊 F001–F012 十二款正式 catalog、serial、年份、發行商、
+  中文標題、ROM hash、MAME support metadata 與未確認 NVRAM 提示。
+- 以 CRC／SHA-1 定案：本地 `Super Dragon Force` ZIP 內容其實是 F007 Super Light Saga -
+  Dragon Force／超級光明戰史；`08002` 成員亦為誤命名，內容匹配 `08007.1`。
+- 新增 `docs/software-catalog.md` 與 `docs/documentation-review.md`；本地九款均匹配 catalog，
+  缺 F009/F010/F012，正式畫面＋音訊＋輸入垂直驗證仍只有三款。
+- 固定 `angelosa/hw_docs` `1b9e8fe`：補第四 normal layer、pixel/GFX mode、video flags、window
+  clipping 與 IRQ1–7 observation；訂正 `$F001F0` 不是 FRC。
+- 搜尋停止線：UM6618/6619 manual、UM70C188 datasheet、額外 VRAM bank、FRC 公式、envelope
+  與 UM6650 pin timing 仍沒有可升格公開來源，後續應轉 ROM consumer／實機量測。

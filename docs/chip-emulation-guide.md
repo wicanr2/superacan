@@ -104,8 +104,10 @@ CPU 寫 UM6618 registers / 128 KiB 可見 VRAM / 256-entry palette
 
 ### 6.1 圖層
 
-- 三個 tilemap 支援尺寸、signed scroll、wrap、全層／tile flip、mosaic、linescroll、lineselect、
+- 目前 oracle 的三個 tilemap 支援尺寸、signed scroll、wrap、全層／tile flip、mosaic、linescroll、lineselect、
   8/4/2-bpp 與 palette bank。像素 0 依色深 mask 視為透明。
+- 硬體 register observation 顯示另有 `$F00160–$F0017F` 第四 normal layer；它尚未進入
+  oracle，應以 F007 等實際 consumer 建立 READY spec 後實作。
 - ROZ 使用 24.8 scroll 與 8.8 A/B/C/D fixed-point，每像素累加來源座標；另保留遊戲使用的
   per-line parameter table。開機 logo 的 1-bpp alternate layout 以 VRAM write 時同步建立的地址
   重排副本讀取。

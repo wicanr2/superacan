@@ -109,20 +109,20 @@ revision）以及是否存在其他 BIOS revision；這些是保存來源缺口�
 
 ### 2.3 雙部分卡帶（3 MB 合版）
 
-- `Super Dragon Force (Taiwan).zip` = `16007 (Taiwan).bin`（2 MB）+
+- 本地歷史名稱 `Super Dragon Force (Taiwan).zip` = `16007 (Taiwan).bin`（2 MB）+
   `08002 (Taiwan).bin`（1 MB）。
 - Bcan 規則 (a)：雙部分 ZIP 必須是一個數字 `.0` 部分 + 一個數字 `.1`
   部分；字串特別驗證「Super Light Saga」需 `16007.0`(2 MiB)+`08007.1`
-  (1 MiB)。本 repo 檔名為 `16007`/`08002`，與 Bcan 期待的 `16007.0`/
-  `08007.1` 命名略異，**對應關係待查證**（Bcan 可能只檢查副檔名數字）。
-- MAME software list 中同名遊戲 `slghtsag`（Super Light Saga）亦為
-  雙 ROM——Super Dragon Force 與 Super Light Saga 可能為同一 3 MB
-  雙晶片卡帶的不同稱呼，**待查證**。
+  (1 MiB)。內容 CRC32／SHA-1 已確認本地兩檔分別精確匹配 MAME F007 的
+  `16007.0`／`08007.1`；因此本地 ZIP 與 `08002` 成員是**誤命名**，內容確定為
+  `slghtsag`（Super Light Saga - Dragon Force／超級光明戰史）。完整 hash 見
+  [software-catalog.md](software-catalog.md#3-f007-雙部分卡帶訂正)。
 
 ### 2.4 卡帶 SRAM
 
 - 掛在 `$EC0000–$ECFFFF`（8-bit），Bcan 存檔固定 32768 byte (a)。
-- 哪些遊戲實際帶 SRAM/電池：**待查證**。
+- MAME catalog 對 F003/F005/F007/F008/F009/F012 宣告 32 KiB NVRAM，但均註明容量未確認，
+  F009 連存在與否也未確認；這是 emulator fallback 提示，不是實體卡帶板級證據。
 
 ## 3. 後續工作
 

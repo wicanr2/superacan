@@ -23,6 +23,7 @@
 | 來源 | Commit | 授權 | 用途 |
 |---|---|---|---|
 | [MAME](https://github.com/mamedev/mame/tree/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc) | `6ae579aed3107c0b42c1c1c5cb05c02df4456eff` | BSD-3-Clause | 整機、UM6618、UM6619、UM6650、卡帶與 CPU 核心整合 |
+| [angelosa/hw_docs](https://github.com/angelosa/hw_docs/tree/1b9e8fe813b29f196ff04ca9c194319ced779f4c/funtech_superacan) | `1b9e8fe813b29f196ff04ca9c194319ced779f4c` | repo 未見統一 LICENSE，僅作引用研究筆記 | MAME driver 作者的逐遊戲 register／layer／window／IRQ observations |
 | [splash5/superacan-notes](https://github.com/splash5/superacan-notes/tree/63731a2202ffa1ad829c49da8804a05b07a5943b) | `63731a2202ffa1ad829c49da8804a05b07a5943b` | MIT | `PCGAM 16000-2A` PCB 照片、CPU／PPU／APU／PAD／卡帶電路圖、UM6650 替代板 |
 | [anomixer/superacan-web](https://github.com/anomixer/superacan-web/tree/929e51c00bdf9475f9bca9f319acf338eb4de4ea) | `929e51c00bdf9475f9bca9f319acf338eb4de4ea` | repo 未見頂層 LICENSE，個別 MAME 衍生碼仍受原授權約束 | MAME WebAssembly 整合與實驗性音效修正 |
 
@@ -73,7 +74,7 @@ Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatib
 | 整機與 SystemBus | [MAME `supracan.cpp`](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/supracan.cpp) | 位址骨架、視訊/DMA/IRQ、輸入、machine config | MAME 仍把 68k/65C02 設為 U13/6、U13/12；應改用 (a) 的 10.738635／3.579545 MHz。IRQ ack、UM6650 埠、部分 DMA/ROZ/window/priority 也有已知 TODO |
 | 68000 CPU | [Moira](https://github.com/dirkwhoffmann/Moira)（MIT）或 [MAME m68000 core](https://github.com/mamedev/mame/tree/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/devices/cpu/m68000)；介面查 [Motorola/NXP M68000 manual addendum](https://www.nxp.com/docs/en/reference-manual/M68000UMAD.pdf) | 指令、例外、中斷 ack；Bcan 已使用 Moira | 型號設定為 68000／MC68HC000 相容模式；主機 overlay、bus 與 HOLD_LINE IRQ 屬平台 glue，不在 CPU core 內 |
 | W65C02 CPU | [CLK](https://github.com/TomHarte/CLK)（MIT）的 6502Mk2，或 [MAME W65C02 core](https://github.com/mamedev/mame/tree/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/devices/cpu/m6502)；介面查 [WDC W65C02S datasheet](https://www.wdc65xx.com/wdc/documentation/w65c02s.pdf) | CMOS 65C02 指令、cycle 與 interrupt | CLK reset 為 level-sensitive；HALT 期間不可吞掉 reset sequence。IRQ 六來源為平台 level-held，不能在 CPU core 外一次清空 |
-| UM6618 | MAME `supracan.cpp` 的 `video_r/video_w`、tilemap、ROZ、sprite、window 與 DMA | 目前唯一找到的公開完整數位實作骨架 | 尚非獨立 device；MAME 自述需重寫。第四層、ROZ scaling table、sprite sizing/clipping、priority、color mix 與 secondary window 仍有 TODO；只能把已驗證路徑移植成 READY 規格 |
+| UM6618 | MAME `supracan.cpp` 的 `video_r/video_w`、tilemap、ROZ、sprite、window 與 DMA＋`hw_docs/pergame.md` | 目前唯一找到的公開完整數位實作骨架；作者筆記另記第四層與未接 register | 尚非獨立 device；MAME 自述需重寫。第四層已有 register observation 但 driver 未實作；ROZ scaling table、sprite sizing/clipping、priority、color mix 與 secondary window 仍有 TODO |
 | UM6619 | [MAME `umc6619_sound.cpp`](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6619_sound.cpp)／[header](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6619_sound.h) | 16 PCM voices、pitch、wave address/length、stereo volume、timer、DMA IRQ、44.744 kHz stream | envelope 4 bytes、reg `$09/$15/$16` 與 DMA completion 仍部分未知；須以本庫遊戲驅動分析修正。`superacan-web` 的 channel 11–15 人工 decay 是消噪 heuristic，不是硬體 ADSR 證據 |
 | UM6650 | [MAME `umc6650.cpp`](https://github.com/mamedev/mame/blob/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/mame/umc/umc6650.cpp)＋[splash5 替代板研究](https://github.com/splash5/superacan-notes/tree/63731a2202ffa1ad829c49da8804a05b07a5943b) | 16-byte ROM key、`$40–$5F` RAM、7-bit address latch | 以 IPL/Bcan (a) 為準：`$EB0D03` 是位址、`$EB0D01` 是資料；MAME `read/write(offset)` 角色相反。`$09/$0C` 輸出仍未完整建模 |
 | 卡帶／SRAM | [MAME Super A'Can bus](https://github.com/mamedev/mame/tree/6ae579aed3107c0b42c1c1c5cb05c02df4456eff/src/devices/bus/supracan) | raw `.bin`、越界讀 `0xFFFF`、battery save | MAME 只接受單檔 `.bin` 骨架；Bcan 的雙部分卡帶、word-swap 載入與固定 32768-byte SRAM 契約須另補 |
@@ -111,13 +112,14 @@ Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatib
 
 ## 4. 完整度與停止線
 
-目前足以完成一般玩家路徑模擬的硬體範圍：雙 CPU、bus/overlay、RAM、卡帶、lockout、
-三 tilemap＋ROZ 基本路徑、sprite、palette、主 DMA、sound RAM、16-channel PCM、手把與 IRQ。
+目前足以完成已驗證數款玩家路徑的硬體範圍：雙 CPU、bus/overlay、RAM、卡帶、lockout、
+三個已實作 tilemap＋ROZ 基本路徑、sprite、palette、主 DMA、sound RAM、16-channel PCM、手把與 IRQ。
 
 仍須保留為未知或部分實作：
 
 - `16000-2A` 額外 128 KiB physical VRAM 的選擇與 consumer；
-- UM6618 第四層、ROZ scaling table、精確 priority/color mix、sprite edge clipping、第二 window；
+- UM6618 已有 register observation 但尚未實作的第四層，以及 ROZ scaling table、精確
+  priority/color mix、sprite edge clipping、第二 window；
 - UM6619 envelope、部分 `$09/$15/$16` 位元與 DMA 邊界行為；
 - UM6650 `$09/$0C` 對卡帶 pin 的完整電氣語意；
 - expansion port、未上市周邊與 RF／composite 類比波形。
