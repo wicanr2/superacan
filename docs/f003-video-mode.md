@@ -113,7 +113,8 @@ normal layer、部分 priority／ROZ 等行為。必須做同狀態 bit 3 A/B �
 `12C3:60E4:0028:002C`，可在 word-swap 後卡帶 ROM `$00073A54` 精確找到。frame 212 時
 `$00074BF4` 所在初始化流程又將兩段清零。
 
-`$7395E–$7399C` 另證實先把 `$7399E` 起的 `$19C` bytes 搬到 Work RAM；因此 ROM
+`$7394E–$7399C` 另證實以 `movea.w #$8000,A5` 取得 sign-extended `$FFFF8000`，再把
+`$7399E` 起的 `$19C` bytes 搬到該處；因此 ROM
 `$73A54` 與 RAM `$FFFF80B6` 的位移皆為 `$B6`，是同一解碼器的 ROM／RAM 視圖，而不是
 兩套偶然相同的程式。該解碼器具有可直接由指令證實的兩類輸出：
 
@@ -123,13 +124,31 @@ normal layer、部分 priority／ROZ 等行為。必須做同狀態 bit 3 A/B �
 
 因此可**已證實**這不是純 relocation，而是「entropy-coded literal＋LZ 類 backward copy」
 的解壓路徑；「Huffman」名稱目前只列**強推論**，因樹表建構雖明顯，尚未完整形式化碼表格式。
-目前也尚未追出每次呼叫的 source pointer、destination end／長度與壓縮資料邊界，不能宣稱檔案
-格式已完整解出。這訂正先前「尚未定位 copy source」：已定位解碼器及演算法家族，但尚未
-定位兩次輸入資料流。所有 ROM 位址沿用本文 word-swap 後低區 CPU address 基準；RAM PC
-則保留實際 `$FFFFxxxx` 執行位址。
+### 6.2 本次解壓呼叫契約（已證實）
+
+在 RAM 解碼器 `$FFFF8000` 入口與終止跳板 `$FFFF80E2` 只讀取 CPU registers，取得同一次
+frame 5–16 呼叫：
+
+| 時點 | A0 | A1 | 解釋 |
+|---|---:|---:|---|
+| 入口 | `$00073B44` | `$FFFFB800` | A0 指向壓縮區 header／table；A1 是輸出起點 |
+| 解出 `$FFFFDA5C` | `$00074A57` | `$FFFFDA5C` | `$F001F0←$0009` producer 的生成位置 |
+| 解出 `$FFFFDB90` | `$00074B63` | `$FFFFDB90` | `$F001F0←$0001` producer 的生成位置 |
+| 終止 | `$00074BEC` | `$FFFFDC56` | source／destination exclusive end |
+
+入口 `$FFFF8000` 的 `adda.w #$00A4,A0` 令實際 bitstream 起點成為 `$73BE8`。故本批壓縮
+區可界定為 header／table `$73B44–$73BE7`（`$A4` bytes）、bitstream `$73BE8–$74BEB`
+（`$1004` bytes），輸出 `$FFFFB800–$FFFFDC55`（`$2456` bytes）。這些界線及
+`$1004 → $2456` 是 software-observed 已證實值；不能直接外推成其他資產也有相同固定長度。
+
+因此「兩次輸入資料流」的舊描述亦需訂正：兩段 `$F001F0` producer 都位於**同一次連續解壓
+輸出**，不是兩次獨立呼叫。格式家族與本批界線已足以離線重播驗證，但 tree header 的欄位定義、
+symbol 編碼及通用終止標記仍未形式化，尚不能宣稱整個 F003 壓縮格式已完整解出。所有 ROM
+位址沿用本文 word-swap 後低區 CPU address 基準；RAM PC 則保留實際 `$FFFFxxxx` 執行位址。
 
 動態 trace 已證實 `$0001↔$0009` 的實際硬體寫入、`$27EE` consumer 與 RAM code producer；
 下一步縮成兩件事：
 
-1. 追 RAM 解碼器 caller 的 A0 source、A1 destination 與終止條件，界定兩段壓縮資料；
+1. 把 `$73B44` header／table 與 `$73BE8` bitstream 形式化成離線解碼器，逐 byte 驗證
+   `$FFFFB800–$FFFFDC55`；
 2. 在同一 save state 對 bit 3 做一次性 A/B renderer probe，比較 frame／VRAM／palette hashes。
