@@ -99,3 +99,4 @@ Formosa Duel、Speedy Dragon、Super Taiwanese Baseball League 與 Journey 另�
 
 初始化、frame update shadow 與 `$0001↔$0009` 切換詳見
 [f003-video-mode.md](f003-video-mode.md)。
+該文件也已加入 6000-frame oracle trace；結果證實切換發生，但尚未證實 direct-color 因果。

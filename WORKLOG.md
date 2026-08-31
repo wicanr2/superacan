@@ -123,3 +123,7 @@
 - 續追 F003 producer：`$74C46` 清 512-byte palette 後寫硬體 `$0009`，`$74D06` 同步建立
   `$FFFF9F20` shadow；`$27EE` 在 dirty flag bit 7 時回寫 `$F001F0`。另找到三處切 `$0001`、
   三處切回 `$0009`，證明 bit 3 是可切換狀態。新增 `docs/f003-video-mode.md` 與動態斷點契約。
+- 在 sibling deprecated oracle 補純記錄 `watchpix` 後跑 F003 6000 frames，取得八筆實際
+  `$F001F0` writes；`$74C86/$27EE` 與靜態資料流吻合，並觀察 `$FFFFDA5C/$FFFFDB90` 的
+  Work RAM mirror producer。畫面不完整但原因可能包含其他 UM6618 缺口，未把它誤判為
+  bit 3 direct-color 證據；下一步是 copy-source 定位與同 save-state A/B。

@@ -77,3 +77,29 @@ MAME 只保存 `m_pixel_mode = data & 0x18`，render path 沒有讀取它。下�
 3. 同狀態比較 bit 3 on/off，判斷差異是 bpp、pixel packing、palette bypass 或其他功能；
 4. 若顯示多 byte-per-pixel，再量測 UM6618→UM70C188 的 P0–P7/PCLK framing；
 5. 定案前使用 `unknown pixel mode bit 3`，不得命名為 TrueColor enable。
+
+## 6. deprecated oracle 動態 trace（a，software-observed）
+
+在 `superacan-emu` deprecated C++ oracle 的 16-bit UM6618 write path 加入純記錄探針；探針
+不修改 register value、副作用或 renderer。固定同一 ROM，headless 執行 6000 frames 得到：
+
+| Frame | Value | PC | 與靜態證據的關係 |
+|---:|---:|---:|---|
+| 20 | `$0009` | `$FFFFDA5C` | Work RAM mirror 中執行的早期更新／轉交程式；尚未定位原始 copy source |
+| 211 | `$0001` | `$FFFFDB90` | Work RAM mirror 程式切除 bit 3；尚未定位原始 copy source |
+| 216 | `$0009` | `$00074C86` | 與開機初始化 immediate producer 完全相符 |
+| 219 | `$0009` | `$000027EE` | 與 shadow consumer 完全相符 |
+| 255 | `$0001` | `$000027EE` | 動態確認 shadow 已被某 producer 改成 `$0001` |
+| 3155 | `$0001` | `$000027EE` | 後續重送 |
+| 3349 | `$0001` | `$000027EE` | 後續重送 |
+| 5914 | `$0009` | `$FFFFDA5C` | 同一 Work RAM mirror 路徑再次寫入 |
+
+frame 200 截圖仍是 A'Can logo；frame 212、217、220、256 為黑色過場。frame 3000 的現有 oracle
+畫面只有底部琥珀色圖像帶，frame 6000 又回到 A'Can logo。這是「現有 renderer 在 F003 路徑
+輸出不完整」的 software-observed 證據，但不能把缺圖唯一歸因於 bit 3：同一 oracle 尚缺第四
+normal layer、部分 priority／ROZ 等行為。必須做同狀態 bit 3 A/B 才能建立因果。
+
+動態 trace 已證實 `$0001↔$0009` 的實際硬體寫入與 `$27EE` consumer；下一步縮成兩件事：
+
+1. 找 `$FFFFDA5C/$FFFFDB90` Work RAM code 的卡帶 copy source，補齊原始 ROM 位址；
+2. 在同一 save state 對 bit 3 做一次性 A/B renderer probe，比較 frame／VRAM／palette hashes。
