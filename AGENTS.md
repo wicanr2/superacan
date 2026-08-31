@@ -92,8 +92,10 @@
 ### 4.3 BIOS 檔案（`bios/`）
 - `supracan.zip`（TorrentZip）：
   - `internal_68k.bin`（4 KB）— 68k 內部 ROM（IPL/boot）
-  - `internal_6502_1.bin`、`internal_6502_2.bin`（各 8 KB）— 65C02 端韌體
-- `umc6650.zip`：`umc6650.bin`（**僅 16 bytes**）— UMC6650 晶片資料，推測為小型 PLD/狀態表
+  - `internal_6502_1.bin`、`internal_6502_2.bin`（各 8 KB）— 開機載入 sound RAM 的內建取樣資料，**不是 65C02 韌體**
+- `umc6650.zip`：`umc6650.bin`（**僅 16 bytes**）— UMC6650 `$20–$2F` 唯讀金鑰，不是 PLD 熔絲圖
+- 四個成員的 CRC32、SHA-1、SHA-256 與兩個本機 ZIP 容器 SHA-256 見
+  [docs/bios-rom-format.md](docs/bios-rom-format.md) §1；功能型模擬所需成員完整，但 dump provenance／revision 未知
 
 ### 4.4 輸入配置（`Bcan.ini`）
 - 手把按鍵：方向 + Start/Select + A/B/C/X/Y/Z **六鍵**（類似 MD 六鍵手把）
@@ -102,7 +104,7 @@
 
 ### 4.5 分析項目與剩餘缺口
 - [x] 逆向 `Bcan.exe` 的記憶體映射（68000 / 65C02 位址空間、UM6618/UM6619 暫存器位址）→ [docs/memory-map.md](docs/memory-map.md)（68k 空間以 MAME driver (b) 為骨架，Work RAM `$FC0000–$FCFFFF`、卡帶 SRAM 32768 B 經 Bcan (a) 確認；65C02 端 I/O `$0400–$04FF`）
-- [x] 比對 MAME `supracan.cpp` driver 實作差異 → 確認 Bcan 硬體層移植自 MAME driver（內嵌 BSD-3-Clause / Angelo Salese、Ryan Holtz 授權字串 (a)）；BIOS 三檔 SHA-1 與 MAME 記載一致
+- [x] 比對 MAME `supracan.cpp` driver 實作差異 → 確認 Bcan 硬體層移植自 MAME driver（內嵌 BSD-3-Clause / Angelo Salese、Ryan Holtz 授權字串 (a)）；BIOS 四個成員的 CRC32／SHA-1 與 MAME 記載一致
 - [x] BIOS 三個 bin 的反組譯（68k IPL 流程、65C02 端資料用途與開機流程）→ [docs/bios-68k.md](docs/bios-68k.md)、[docs/bios-65c02.md](docs/bios-65c02.md)。結論：68k IPL = UMC6650 交握 + 卡帶 `$2000` 授權資料比對（類 TMSS，含 `(reverse engineer)` 彩蛋）+ 跳卡帶向量入口；兩塊「6502 bin」其實是**取樣資料**（複製進 sound RAM `$0000–$3FFF`），65C02 程式由卡帶上傳；遊戲驅動與通訊協定已另於 [docs/sound-driver.md](docs/sound-driver.md) 完成主要資料流分析
 - [x] ROM header 格式與 bank 切換（mapper）機制 → 無外加標頭、16-bit word-swap 向量表格式、無 mapper；入口點已驗證為合法 68k 程式碼（[docs/bios-rom-format.md](docs/bios-rom-format.md)）
 - [x] 存檔（save state）格式 → magic `ACANRTS`、10 槽位、96-byte 標頭（version/headersize/ROM SHA-256/整體 SHA-256/payload 大小），payload 欄位版面待查；cheat 檔實為 **tab 分隔純文字**（標頭 `BCAN_CHT_1`，相容舊 magic `ACAN_CHT_1`）（[docs/emulator-analysis.md](docs/emulator-analysis.md) §4）

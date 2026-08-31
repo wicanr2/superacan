@@ -54,3 +54,14 @@
   priority、sprite clipping／sizing、visible area 與 UM6619 envelope 仍缺獨立硬體證據。
 - 開發現況分離：C++ oracle 證明架構可行；production 純 Go 核心仍在 68000 開工階段，不能把
   oracle 完成度冒充 Go 版完成度。
+
+## 2026-08-31：BIOS 完整性與文件稽核
+
+- 唯讀盤點 `Bcan008b/bios/`：兩個 ZIP 共四個預期成員，大小、CRC32、SHA-1 均與固定
+  MAME `6ae579a` 的 `supracan.cpp`／`umc6650.cpp` 定義一致，功能型模擬所需檔案完整。
+- 補入兩個 ZIP 容器與四個解壓成員的 SHA-256；說明 loader 應驗成員身分，不能把可因壓縮
+  metadata 改變的 ZIP hash 當唯一合法值。
+- 訂正舊文：`umc6650.bin` 的 CRC 已由 MAME 列出；兩個 `internal_6502` 檔是內建取樣而非
+  韌體；UMC6650 內容是唯讀金鑰而非 PLD 熔絲圖；埠角色已由 IPL＋Bcan 雙重確認。
+- 保留限制：ZIP 的 1996 timestamp 不是 dump 日期證據；dump 設備、來源 revision 與其他可能
+  BIOS revision 仍未知，但不阻塞目前已知開機路徑。

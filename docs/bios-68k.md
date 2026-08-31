@@ -49,10 +49,11 @@ IPL 使用兩個埠：`A0=$EB0D03`、`A1=$EB0D01`。依操作順序可判定：
   `$09`、`$0C` = 輸出到卡帶的 lockout 結果暫存器（MAME TODO 亦提到 cart
   B26/B27 來自 `$09`）。
 
-> **與 MAME 的差異（待查證）**：MAME `umc6650.cpp` 的 read/write 把
+> **與 MAME 的已確認差異**：MAME `umc6650.cpp` 的 read/write 把
 > offset 1 當位址埠、offset 3 當資料埠，**與 IPL 實際用法相反**；MAME 能
 > 開機可能依賴 §3.1 失敗路徑最終仍放行，或其「externalized key」處理。
-> Bcan（需要 umc6650.bin）應是按正確順序實作。
+> Bcan SystemBus 反編譯另已確認 `$EB0D03`=位址、`$EB0D01`=資料，因此埠角色
+> 已達 (a) 級；MAME 為本項已知錯誤。MAME 為何仍能讓部分遊戲開機則尚待動態追蹤。
 
 ### 3.1 IPL 的檢查步驟（`$40A`–$553）
 

@@ -6,19 +6,34 @@
 
 ## 1. BIOS 檔案
 
-`supracan.zip`（TorrentZip）成員的 SHA-1 與 MAME `supracan.cpp` ROM_START
-記載**完全一致**，確認本 repo 的 BIOS dump 即 MAME 使用的同一組：
+`supracan.zip` 與 `umc6650.zip` 的四個成員，其大小、CRC32 與 SHA-1 均和固定
+MAME commit `6ae579a` 的 `supracan.cpp`／`umc6650.cpp` ROM 定義**完全一致**，
+確認本 repo 的 BIOS dump 即 MAME 使用的同一組：
 
-| 檔案 | 大小 | SHA-1 | MAME CRC32 |
-|---|---|---|---|
-| internal_68k.bin | 4096 | a8e75633…f278a10a | 8d575662 |
-| internal_6502_1.bin | 8192 | 8bf17bf3…e8b6f5c1 | fc9fb05f |
-| internal_6502_2.bin | 8192 | ab8f1550…4e1e779f | bf950ab7 |
-| umc6650.bin | 16 | f9480545…cec77be78 | （MAME 未列） |
+| ZIP／成員 | 大小 | CRC32 | SHA-1 | SHA-256 |
+|---|---:|---|---|---|
+| `supracan.zip`／`internal_68k.bin` | 4096 | `8d575662` | `a8e75633662978d0a885f16a4ed0f898f278a10a` | `2e4d88bec69b5e7e4803368c233ce0d20f6dd107c5af0cfcc0089d310c695d7c` |
+| `supracan.zip`／`internal_6502_1.bin` | 8192 | `fc9fb05f` | `8bf17bf311afeb9974bee058ba63eef5e8b6f5c1` | `219f51bcb8544fe733bf784e087544f97aa5457945260c7fa07a8639f30f3a68` |
+| `supracan.zip`／`internal_6502_2.bin` | 8192 | `bf950ab7` | `ab8f15506308b89d2f8ef01b88aa2595d4e1e779` | `9889590805a97b7bb439d853d9ae4d6b31067bacb8225ab0538f3491dedab4b8` |
+| `umc6650.zip`／`umc6650.bin` | 16 | `0ba78597` | `f94805457976d60b91e8df18f9f49cccec77be78` | `f158d83be6e73389967c6dadfd5160bb742e09212a1b218fb829bae3b4961b28` |
 
-zip 內檔案日期均為 1996-12-24。
+本機 ZIP 容器 SHA-256：
 
-### 1.1 internal_68k.bin（68k IPL，4 KB）
+- `supracan.zip`：`fd79fd61b2e39a89d62ba91e1c9847d867e4d946edb808e9161f38df1d95461c`
+- `umc6650.zip`：`c354a4125ceaf2405c19e12104970f5da074dca1ac9270be235b56f24064727d`
+
+模擬器應以**成員檔名＋解壓大小＋CRC／內容雜湊**辨識 BIOS，不應把 ZIP 容器 SHA-256
+當唯一合法值；相同成員可因壓縮器、排列與 metadata 不同而產生不同容器雜湊。本機 ZIP
+成員時間戳均為 1996-12-24，但這類 archive metadata 不足以證明製造、dump 或發行日期，
+只作本機容器盤點。
+
+### 1.1 完整性判定與仍缺的來源資訊
+
+就功能型模擬器而言，這組 BIOS **檔案完整**：四個 MAME 定義成員都存在，沒有缺檔、
+截短或 CRC 不符。仍未知的是 dump provenance（實際取樣設備、dump 日期、主機板／晶片
+revision）以及是否存在其他 BIOS revision；這些是保存來源缺口，不阻塞目前已知軟體開機。
+
+### 1.2 internal_68k.bin（68k IPL，4 KB）
 
 - MAME 以 `ROM_LOAD16_WORD_SWAP` 載入，映射於 68k 空間
   `$000000–$000FFF` 與 `$F80000–$F80FFF`（開機視圖）。因此檔案需做
@@ -36,7 +51,7 @@ zip 內檔案日期均為 1996-12-24。
   cartridge entry」(a) 證明開機末端須轉交控制權給卡帶。
   **反組譯已完成**，見 [bios-68k.md](bios-68k.md)。
 
-### 1.2 internal_6502_1/2.bin（各 8 KB）——**已查明：非程式，是取樣資料**
+### 1.3 internal_6502_1/2.bin（各 8 KB）——**已查明：非程式，是取樣資料**
 
 - MAME 載入到 `internal6502` region（兩塊連放共 16 KB），
   `machine_reset()` 時**整塊複製進 65C02 共享 sound RAM `$0000–$3FFF`**；
@@ -47,12 +62,14 @@ zip 內檔案日期均為 1996-12-24。
 - 65C02 程式由卡帶（68k）經 `$E80000` 上傳、寫 `$E9001C` bit0 釋放
   HALT。詳見 [bios-65c02.md](bios-65c02.md)。
 
-### 1.3 umc6650.bin（16 bytes）
+### 1.4 umc6650.bin（16 bytes）
 
 - 內容：12 byte ASCII `UMC 1994 (C)` + 4 byte 二進位（`90 70 65 9B`）。
-- 判斷：不是 PLD 熔絲圖，比較像**識別/金鑰字串**；配合 MAME 把 UMC6650
-  標為 lockout/security 晶片（掛在 `$EB0D00`），推測 68k IPL 開機時向
-  晶片比對此識別資料。**確切協定待查證**。
+- 判斷：不是 PLD 熔絲圖，而是 UMC6650 內部 `$20–$2F` 的**唯讀金鑰**。
+  IPL 由 `$EB0D03` 選址、`$EB0D01` 讀資料，反向讀回 16 bytes 後驗證 ASCII
+  與四個校驗 byte；確切流程已由反組譯及 Bcan bus 實作確認，見
+  [bios-68k.md](bios-68k.md#3-umc6650-協定a由-ipl-反組譯推得)。仍未知的是
+  `$09/$0C` 對卡帶 pin 的完整電氣語意，而非金鑰用途。
 
 ## 2. ROM（卡帶）格式
 
