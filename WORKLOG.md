@@ -65,3 +65,14 @@
   韌體；UMC6650 內容是唯讀金鑰而非 PLD 熔絲圖；埠角色已由 IPL＋Bcan 雙重確認。
 - 保留限制：ZIP 的 1996 timestamp 不是 dump 日期證據；dump 設備、來源 revision 與其他可能
   BIOS revision 仍未知，但不阻塞目前已知開機路徑。
+
+## 2026-08-31：68k BIOS 完整流程與中斷向量
+
+- 以 word-swap 後 SHA-256 固定輸入，用 GNU m68k objdump 完整解碼 `$400–$630`，並逐項盤點
+  `$000–$3FF` 的 256-entry vector table。
+- 新增 `docs/bios-control-flow.md`：UM6650 RAM／key、卡帶授權兩階段、失敗路徑、overlay
+  轉交、完整 exception／autovector 表與模擬器測試契約。
+- 中斷結論：level 1–7 各指向 `$624–$630` 的單一 `RTE`；其餘 vectors 幾乎全指向 `$622`
+  的 `RTE`。BIOS 沒有週邊 service routine；遊戲 IRQ handlers 在 overlay 關閉後由卡帶提供。
+- 新模擬風險：`$61E` 關高區 overlay 後仍須執行已預取的 `$620 JMP (A0)`，因此 68000
+  prefetch queue 是開機轉交的可觀察契約，不能用無 prefetch 的逐指令重新取碼模型取代。

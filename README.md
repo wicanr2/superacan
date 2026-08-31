@@ -56,6 +56,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 ## 文件導航
 
 - [68k IPL 分析](docs/bios-68k.md)
+- [68k BIOS 完整控制流程與中斷向量](docs/bios-control-flow.md)
 - [65C02 端 BIOS 取樣資料與開機流程](docs/bios-65c02.md)
 - [BIOS 與 ROM 格式](docs/bios-rom-format.md)
 - [Bcan 模擬器逆向分析](docs/emulator-analysis.md)

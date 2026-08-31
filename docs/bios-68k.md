@@ -6,11 +6,14 @@
 > `src/mame/umc/supracan.cpp`、`src/mame/umc/umc6650.cpp` **(b)**。
 > 依工作守則只記位址、暫存器操作與流程，不複製大段反組譯或版權資料。
 
+完整 256-entry vector table、reset／失敗路徑、逐段控制流程、prefetch 轉交條件與流程圖見
+[bios-control-flow.md](bios-control-flow.md)。本文件保留硬體協定與授權檢查摘要。
+
 ## 1. 檔案佈局（word-swap 還原後）
 
 | Offset | 內容 |
 |---|---|
-| `$000–$3FF` | 向量表與填充。向量 0（SSP）= `$00FD000A`、向量 1（PC）= `$00000400`；其餘多數指向 `$00000622`（共用的單一 `RTE`） |
+| `$000–$3FF` | 256-entry 向量表。向量 0（SSP）=`$00FD000A`、向量 1（PC）=`$00000400`；level 1–7 分別指向 `$624–$630` 的 `RTE`，其餘 exception／interrupt 幾乎全部指向 `$622` 的 `RTE` |
 | `$400–$630` | 程式碼（全部 IPL 邏輯，約 560 bytes） |
 | `$632–$947` | `0xFFFF` 填充 |
 | `$948` | ASCII 字串 `UMC 1994 (C)` |
