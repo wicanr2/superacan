@@ -64,6 +64,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [正式軟體目錄與本地 ROM 對照](docs/software-catalog.md)
 - [Bcan 模擬器逆向分析](docs/emulator-analysis.md)
 - [記憶體映射與硬體暫存器](docs/memory-map.md)
+- [VRAM 實體架構與 128 KiB CPU 視窗](docs/vram-architecture.md)
 - [硬體組成與逐晶片模擬實作參考](docs/hardware-implementation-sources.md)
 - [逐晶片模擬實作指南](docs/chip-emulation-guide.md)
 - [UM70C188 調色盤／RAMDAC 研究](docs/palette-dac.md)

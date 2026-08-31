@@ -1,6 +1,6 @@
 # 文件完整度複查與可補來源
 
-更新日期：2026-08-31。此表以「能否支持軟體模擬」為準，不以頁數或未命名 register 數量評分。
+更新日期：2026-09-01。此表以「能否支持軟體模擬」為準，不以頁數或未命名 register 數量評分。
 
 | 文件領域 | 現況 | 本輪找到的補強來源 | 下一個有效動作 |
 |---|---|---|---|
@@ -8,7 +8,7 @@
 | 正式軟體目錄 | 本輪補齊 F001–F012、標題、serial、hash、NVRAM 提示 | MAME `hash/supracan.xml`（CC0） | 對本地九款建立正常玩家路徑矩陣 |
 | UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ 定義本輪補強 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
 | UM6619 | 主要 PCM／DMA／timer 可實作 | MAME sound device＋本地遊戲 driver | envelope／release 仍需實機或更多 driver consumer |
-| UM70C188 | 型號／接線已知；F003 `$0001/$0009` 動態切換與 `$27EE` shadow 已確認 | Bitsavers UMC datasheet＋`PPU.sch`＋ROM＋6000-frame oracle trace | 定位 Work RAM producer copy source，做同 save-state bit 3 A/B，才能判斷 direct-color |
+| UM70C188 | 型號／接線已知；F003 `$0001/$0009` 動態切換、`$27EE` shadow 與 runtime 解壓 producer 已確認 | Bitsavers UMC datasheet＋`PPU.sch`＋ROM＋6000-frame oracle trace | 形式化 F003 解碼格式並做同 save-state bit 3 A/B，才能判斷 direct-color |
 | 卡帶／SRAM | raw ROM、雙 part、32 KiB fallback 已知 | MAME software list＋板級 schematic | 實拍各型卡帶 PCB，確認哪些 serial 真有 SRAM／電池 |
 | 主機板 | 16000-2A schematic 已證實 UM6618 `VRAM_A17` 接 SRAM `A16` | `superacan-notes` `PPU.sch` | 以 ROM consumer／logic capture 找出誰產生最高位；不再把配線列為未知 |
 | 類比輸出 | 元件與近似邊界已知 | UM70C171、KA2195D datasheet | 要精確只能量測 UM70C188／實機 composite capture |
@@ -22,6 +22,8 @@
 4. `$F001F0` 是 pixel／GFX mode，不是 FRC；FRC control/frequency 位於 `$E90014/$E90016`。
 5. 主 68k IRQ1–7 的 MAME 作者觀察可補成 expansion、cart、FRC/timer、horizontal retrace、
    fixed-line trigger、sound-to-main、vertical retrace，但仍屬研究觀察，不是晶片資料表。
+6. F003 的兩段 `$F001F0` producer 並非兩次獨立 copy：兩者同屬 `$73B44–$74BEB`
+   壓縮區解至 `$FFFFB800–$FFFFDC55` 的單次連續輸出；格式細節與 bit 3 畫面因果仍未定案。
 
 ## 網路資料已接近停止線的項目
 
