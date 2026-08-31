@@ -6,6 +6,8 @@
 [sound-driver.md](sound-driver.md)為準。
 實際排程、reset、IRQ、像素合成與 PCM 演算法見
 [逐晶片模擬實作指南](chip-emulation-guide.md)。
+現有資料能支持的模擬器完成層級、MAME source 定位與缺口見
+[軟體模擬資料充分度評估](emulation-readiness-assessment.md)。
 
 ## 1. 證據契約與本次網路快照
 

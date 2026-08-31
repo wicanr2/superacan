@@ -43,3 +43,14 @@
   SiliconRE 公開狀態仍為 Stalled，沒有可用 schematic／netlist／Verilog，不能當閘級 oracle。
 - 模擬策略維持：一般輸出使用已驗證的 xBGR555 digital framebuffer；類比 palette／NTSC path
   若日後實作，必須明標 approximation 並與實機 capture 分開驗證。
+
+## 2026-08-31：軟體模擬資料充分度評估
+
+- 結論：現有知識庫＋固定 MAME source＋deprecated C++ oracle 足以重建功能型軟體模擬器，
+  並已證明三款遊戲的畫面、音訊與輸入垂直切片；不足以宣稱全庫相容或硬體逐週期精確。
+- 新增 `docs/emulation-readiness-assessment.md`：逐子系統 readiness matrix、MAME 函式到規格的
+  定位索引、授權邊界、缺口分類與下一個九款 ROM 相容性 gate。
+- 關鍵限制：現有正式玩家路徑集中在 Boom Zoo、Monopoly、Speedy Dragon；UM6618 的部分 DMA、
+  priority、sprite clipping／sizing、visible area 與 UM6619 envelope 仍缺獨立硬體證據。
+- 開發現況分離：C++ oracle 證明架構可行；production 純 Go 核心仍在 68000 開工階段，不能把
+  oracle 完成度冒充 Go 版完成度。

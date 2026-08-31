@@ -62,6 +62,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [記憶體映射與硬體暫存器](docs/memory-map.md)
 - [硬體組成與逐晶片模擬實作參考](docs/hardware-implementation-sources.md)
 - [逐晶片模擬實作指南](docs/chip-emulation-guide.md)
+- [軟體模擬資料充分度評估](docs/emulation-readiness-assessment.md)
 - [遊戲音效驅動與通訊協定](docs/sound-driver.md)
 - [硬體圖片來源與授權](assets/hardware/README.md)
 - [工作歷程](WORKLOG.md)
