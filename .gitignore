@@ -1,0 +1,6 @@
+Bcan008b/
+Bcan008b.zip
+*.bin
+*.zip
+*.i64
+__pycache__/
