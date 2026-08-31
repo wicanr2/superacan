@@ -187,7 +187,7 @@ MAME `main_map` 的**所有區段 Bcan 都有實作**：
 | `$F00000–$F001FF` | UM6618 暫存器窗（handler `sub_1400A8FA0` 寫 / `sub_1400A8DA0` 讀，物件 +168096） |
 | `$F00200–$F003FF` | 調色盤 RAM 512 B（+168768） |
 | `$F00400–$F3FFFF`、`$F60000–$F7FFFF` | **讀寫皆靜默 no-op**（open bus 不回 bus error） |
-| `$F40000–$F5FFFF` | VRAM 128 KB（+169280），word 讀寫做 byte-swap（host 端 LE 儲存） |
+| `$F40000–$F5FFFF` | 68k 可見 VRAM 視窗 128 KiB（+169280），word 讀寫做 byte-swap（host 端 LE 儲存）；部分主機板物理裝片容量較大，見 hardware-implementation-sources.md |
 | `$FC0000–$FFFFFF` | Work RAM 64 KB（+69672），offset = addr & 0xFFFF——**mirror 0x30000 實測成立**，且實際上 $FC–$FF 四個 64 KB 頁全映射同一 RAM |
 | `≥ $1000000` | 回 type 2 錯誤（24-bit 位址外） |
 

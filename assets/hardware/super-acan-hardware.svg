@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Super A'Can 硬體架構摘要</title>
+  <desc id="desc">顯示 Motorola MC68HC000P10、65C02、UM6618、UM6619、記憶體、卡帶與手把的證據分級連線圖。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101929"/>
+      <stop offset="1" stop-color="#1d2f45"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9fb3c8"/>
+    </marker>
+    <style>
+      .box{fill:#17263a;stroke:#58c7d6;stroke-width:2;rx:14;filter:url(#shadow)}
+      .secondary{stroke:#c6a15b}.memory{stroke:#8fc56b}.io{stroke:#b98bd6}
+      .title{font:700 30px sans-serif;fill:#fff}.subtitle{font:16px sans-serif;fill:#b9cadb}
+      .head{font:700 20px sans-serif;fill:#fff}.text{font:15px sans-serif;fill:#d8e5ef}.small{font:13px sans-serif;fill:#a9bfd0}
+      .bus{fill:none;stroke:#9fb3c8;stroke-width:3;marker-end:url(#arrow)}
+      .both{marker-start:url(#arrow)}.dash{stroke-dasharray:8 7}.label{font:13px monospace;fill:#d7e6f2}
+    </style>
+  </defs>
+  <rect width="1200" height="760" rx="24" fill="url(#bg)"/>
+  <text x="60" y="58" class="title">Super A'Can 硬體架構摘要</text>
+  <text x="60" y="86" class="subtitle">原始位址保留於 docs；(a) 實測／反編譯　(b) MAME 實作　虛線＝部分待查證</text>
+
+  <rect x="60" y="135" width="260" height="125" class="box"/>
+  <text x="85" y="172" class="head">MC68HC000P10</text>
+  <text x="85" y="200" class="text">10.738635 MHz (a)</text>
+  <text x="85" y="225" class="small">24-bit SystemBus／主控制</text>
+
+  <rect x="60" y="315" width="260" height="120" class="box secondary"/>
+  <text x="85" y="352" class="head">WDC 65C02</text>
+  <text x="85" y="380" class="text">3.579545 MHz (a)</text>
+  <text x="85" y="405" class="small">音效驅動、mailbox、手把掃描</text>
+
+  <rect x="465" y="120" width="275" height="145" class="box"/>
+  <text x="490" y="157" class="head">UMC UM6618 視訊</text>
+  <text x="490" y="185" class="text">tilemap／sprite／window (a+b)</text>
+  <text x="490" y="210" class="text">主機 DMA：2 通道 (b)</text>
+  <text x="490" y="235" class="small">ROZ／部分混色仍待查證</text>
+
+  <rect x="465" y="315" width="275" height="145" class="box secondary"/>
+  <text x="490" y="352" class="head">UMC UM6619 音效／周邊</text>
+  <text x="490" y="380" class="text">16 通道 PCM／取樣合成 (a+b)</text>
+  <text x="490" y="405" class="text">timer IRQ／DMA 雙緩衝</text>
+  <text x="490" y="430" class="small">未見 FM 證據</text>
+
+  <rect x="870" y="112" width="270" height="94" class="box memory"/>
+  <text x="895" y="148" class="head">Work RAM</text>
+  <text x="895" y="177" class="label">64 KiB　$FC0000–$FCFFFF (a)</text>
+
+  <rect x="870" y="230" width="270" height="94" class="box memory"/>
+  <text x="895" y="266" class="head">VRAM</text>
+  <text x="895" y="295" class="label">68k 視窗 128 KiB (a)</text>
+
+  <rect x="870" y="348" width="270" height="94" class="box memory"/>
+  <text x="895" y="384" class="head">Sound RAM</text>
+  <text x="895" y="413" class="label">32 KiB／I/O $0400–$04FF</text>
+
+  <rect x="60" y="535" width="260" height="105" class="box io"/>
+  <text x="85" y="572" class="head">卡帶／SRAM</text>
+  <text x="85" y="600" class="text">raw、word-swap、無 mapper (a)</text>
+  <text x="85" y="625" class="small">SRAM 32 KiB，僅奇位址</text>
+
+  <rect x="465" y="535" width="275" height="105" class="box io"/>
+  <text x="490" y="572" class="head">UMC6650／68k IPL</text>
+  <text x="490" y="600" class="text">交握＋卡帶授權檢查 (a)</text>
+  <text x="490" y="625" class="small">overlay 關閉為單向 latch</text>
+
+  <rect x="870" y="535" width="270" height="105" class="box io"/>
+  <text x="895" y="572" class="head">手把 × 2</text>
+  <text x="895" y="600" class="text">方向＋Start／Select＋六鍵</text>
+  <text x="895" y="625" class="small">shift register／direct mode (a+b)</text>
+
+  <path d="M320 197 H465" class="bus both"/>
+  <text x="345" y="185" class="label">$F00000 視訊</text>
+  <path d="M320 160 C390 105 790 95 870 159" class="bus both"/>
+  <text x="620" y="105" class="label">68k SystemBus</text>
+  <path d="M320 225 C390 225 390 370 465 370" class="bus both"/>
+  <text x="340" y="300" class="label">$E80000/$E90000</text>
+  <path d="M740 230 C800 230 800 277 870 277" class="bus both"/>
+  <path d="M740 390 H870" class="bus both"/>
+  <path d="M320 375 H465" class="bus both"/>
+  <text x="338" y="362" class="label">IRQ／RAM</text>
+  <path d="M160 260 C110 355 110 485 190 535" class="bus both"/>
+  <path d="M225 260 C245 475 405 500 465 585" class="bus both dash"/>
+  <path d="M320 405 C450 495 780 490 870 585" class="bus both dash"/>
+
+  <text x="60" y="705" class="subtitle">證據入口：docs/memory-map.md · docs/bios-68k.md · docs/sound-driver.md</text>
+</svg>
