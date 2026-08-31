@@ -148,6 +148,11 @@
     - 68k IRQ 需 HOLD_LINE 語意（CPU ack 後解除），否則用 `STOP #$2700` 等 vblank 的遊戲會鎖死在中斷再進入循環。
     - Speedy Dragon 第二音效驅動的 DMA control 實測為 `$B800`（word 模式），sound-driver.md §1.2 的 `$2648` 應修正；第二驅動後續命令協定仍待查證（IRQ enable 切成 `$0C` 後 68k 端停在 `$28DE` 等待）。
   - 實測佐證：IPL 轉交點 `JMP $F80604`（高區視圖）在模擬器實跑中確認，與 docs/bios-68k.md §2 一致。
+  - **里程碑 3+4 完成（2026-08-31）**：UM6619 PCM 音效合成（16 通道、period/音量/key/DMA 雙緩衝/timer IRQ，原生 44744 Hz→48 kHz 線性插值；演算法依 MAME `umc6619_sound.cpp` BSD-3-Clause 重新實作）、SDL2 音訊輸出＋headless `--wav` 錄音、手把輸入（SDL 鍵盤＋headless `--press` 注入；shift register 與 direct mode 兩路皆通）。Boom Zoo/Monopoly 音樂＋按鍵反應（標題按 Start 進入選擇畫面）驗證通過（數據見 superacan-emu/docs/verify-audio-input.md）。**Speedy Dragon 第二音樂驅動已修復**（里程碑 2 的已知缺陷），根因三層：
+    - CLK 6502Mk2 的 Reset 是 level-triggered 且只在給 cycle 時捕捉——HALT 期間不給 cycle 會讓 reset「設了又清」整個消失；手動補跑固定 7-cycle 又會截斷序列。正確做法：釋放後**繼續拉住 Reset 線**直到 CPU 進入 reset 序列（讀 `$FFFC` 向量）再放開。
+    - **65C02 IRQ 來源是 level-held、各有專屬 ack**（bit2←讀 `$0405`、bit3←讀 `$0404`、bit5←讀 `$040A`、bit6←讀 UM6619 reg `$16`、bit7←讀 reg `$14`），`$0411` 是純狀態暫存器——MAME 的「讀取即清全部」會丟同時發生的來源（(a) 級修正，memory-map.md §5 已更新）。
+    - latch `$0404/$0405` 空讀回 `$CD`，68k 經 `$E80404/05` 窗口寫入觸發 IRQ；開機 probe 靠 `$0407` 清除脈衝觸發 latch IRQ 讀到 `$CD` 快速結束（觸發條件為功能推測）。
+    - 第二驅動結構反組譯完成（sound-driver.md §2.2）；實際上傳常式為 68k `$34E4`（control `$B800`），靜態碼 `$954`（`$2648`）無呼叫者。
 - 版權隔離：ROM/BIOS 等受版權保護檔案**不上傳** GitHub，repo 的 `.gitignore` 預設排除 `*.bin`、`Bcan008b/` 整個目錄（含 ROM 與模擬器執行檔）。
 
 ## 7. 工作守則

@@ -89,14 +89,14 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
 |---|---|
 | `$0300` | Boot OK 狀態 |
 | `$0402/$0403` | 手把 shift register 0/1（讀） |
-| `$0404/$0405` | IRQ ack latch（讀，magic 0xCD） |
+| `$0404/$0405` | 68k→65C02 byte latch ×2（IRQ bit3/bit2）：**空讀回 `$CD`**；68k 經 `$E80404/$E80405` 窗口寫入即置位並觸發 IRQ；65C02 讀取即 ack 並清空（(a)，superacan-emu 實測修正；MAME 當作純 RAM、無 IRQ） |
 | `$0406` | 手把 +5V presence?（讀） |
-| `$0407` | 手把 shift register 控制（寫：latch/移位/清除，雙手把） |
+| `$0407` | 手把 shift register 控制（寫：latch/移位/清除，雙手把）；清除脈衝（bit4/5）同時觸發對應 latch IRQ（功能推測 (a)，probe 快速路徑所需） |
 | `$0409` | IRQ 來源 bit4 ack（讀取 ack，(a) 遊戲驅動實測，與 (b) 一致） |
-| `$040A` | 6502→68k IRQ 請求（mailbox；觸發 68k IRQ6） |
+| `$040A` | 6502→68k IRQ 請求（mailbox；觸發 68k IRQ6）；**65C02 讀取 = ack IRQ bit5**（(a)，兩套驅動的 bit5 handler 實測） |
 | `$040C/$040D` | (a) 取樣 DMA 位址/半頁資訊交給 68k（寫後 `$040A=$FF` 觸發 68k IRQ6 refill，雙緩衝 PCM 串流，見 sound-driver.md） |
 | `$0410` | IRQ enable |
-| `$0411` | IRQ 來源旗標（讀取即清除）：0x40 DMA 取樣播放、0x04/0x08 latch、0x10、0x20=68k 請求、0x80 timer |
+| `$0411` | IRQ 來源旗標（**純狀態、讀取不清**，(a) superacan-emu 實測修正）：各 bit level-held 直到專屬 ack——0x40←讀 UM6619 reg `$16`、0x04←讀 `$0405`、0x08←讀 `$0404`、0x10←讀 `$0409`、0x20←讀 `$040A`、0x80←讀 reg `$14`。MAME 的「讀取即清全部」會丟同時發生的來源 |
 | `$0412` | NMI acknowledge |
 | `$0420` | UM6619 暫存器位址（寫）/音效硬體狀態（讀） |
 | `$0422` | UM6619 暫存器資料（讀寫） |
@@ -105,13 +105,19 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
   `$0402/$0403`；68k 也可從 sound RAM `$0200/$0202` 直接讀到已組合的
   手把狀態（active low，`^ 0xFFFF`）。
 - UM6619：暫存器間接定址（addr=$0420、data=$0422）；reg $14/$16 與
-  timer/DMA IRQ 相關。**暫存器語意已部分升級為 (a)**（Speedy Dragon 驅動
-  實測，見 [sound-driver.md](sound-driver.md)）：`$17`=key on/off
-  （bit4=key-on、低 nibble=通道）、`$20–$2F`/`$30–$3F`=通道 period 低/高、
-  `$E0–$EF`=通道音量、`$16`=取樣 DMA 狀態（bit6 busy）/控制（$80 啟動）、
-  `$9F` 寫 `$FF` 觸發取樣、`$14`=timer/IRQ 控制；合成方式判斷為
-  **PCM/取樣式，無 FM 跡象**。完整表仍待查證（MAME `umc6619_sound.cpp`
-  部分實作）。
+  timer/DMA IRQ 相關。**暫存器語意已升級為 (a)**（Speedy Dragon 驅動
+  實測 + superacan-emu 里程碑 3 實作驗證，見 [sound-driver.md](sound-driver.md)
+  §5）：`$17`=key on/off（高 nibble≠0=key-on、低 nibble=通道）、
+  `$20–$2F`/`$30–$3F`=通道 period 低/高（addr_increment=period<<6，
+  16.16 固定小數點）、`$50–$5F`=波形長度（0x40<<n，bit0=one-shot）、
+  `$60/$70`=取樣起始位址（×0x40）、`$90–$9F`=DMA 驅動旗標（雙緩衝，
+  播完觸發 IRQ bit6 並自動重新 key-on）、`$E0–$EF`=通道音量（高/低 nibble
+  左右聲道 ×17）、`$11/$12`=timer period（10×(0x10000−n) clocks，初始值
+  ≈200 Hz）、`$14`=timer 控制（bit7 啟動、bit6 致能 IRQ bit7、讀取 ack）、
+  `$16`=取樣 DMA 狀態（bit6 busy、讀取 ack IRQ bit6）。合成方式：
+  **PCM/取樣式，無 FM**；取樣為 sound RAM 8-bit 無號資料，原生抽樣率
+  = 3.579545 MHz/80 = 44744.3125 Hz（(b) MAME `umc6619_sound.cpp` 模型，
+  已獲 (a) 實作驗證）。
 
 ## 6. 中斷（b）
 
