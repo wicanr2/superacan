@@ -89,3 +89,12 @@
   clipping 與 IRQ1–7 observation；訂正 `$F001F0` 不是 FRC。
 - 搜尋停止線：UM6618/6619 manual、UM70C188 datasheet、額外 VRAM bank、FRC 公式、envelope
   與 UM6650 pin timing 仍沒有可升格公開來源，後續應轉 ROM consumer／實機量測。
+
+## 2026-08-31：256 KiB VRAM 最高位配線確認
+
+- 逐 net 檢查 `superacan-notes` 固定 commit `63731a2` 的 Eagle `PPU.sch`：UM6618
+  `VRAM_A1..A17` 依序接到 U5/U6 `UM611024` 的 `A0..A16`。
+- 因 `VRAM_A17` 實際接到兩顆 SRAM 的最高位 `A16`，確認上半 128 KiB 在電氣上可由 UM6618
+  定址，推翻「只是換成較大 SRAM、上半部未接」的候選解釋。
+- 新增 `docs/vram-architecture.md`，明確區分 128 KiB CPU window 與 256 KiB physical VRAM；
+  register／renderer／DMA consumer 仍未知，BIOS 因不初始化視訊硬體而無法回答。

@@ -36,7 +36,7 @@
 | `$EC0000–$ECFFFF` | 卡帶 NVRAM/SRAM（8-bit 寬） |
 | `$F00000–$F001FF` | **UM6618** 視訊暫存器（256 個 16-bit 暫存器窗口） |
 | `$F00200–$F003FF` | 調色盤 RAM，256 色 × xBGR-555 |
-| `$F40000–$F5FFFF` | **68k 可見 VRAM 視窗 128 KiB**；`PCGAM 16000-2A` 物理裝片合計 256 KiB，額外 bank 用途未知 |
+| `$F40000–$F5FFFF` | **68k 可見 VRAM 視窗 128 KiB**；`PCGAM 16000-2A` 物理裝片合計 256 KiB，UM6618 可驅動上半部但 consumer 未定 |
 | `$F80000–$FBFFFF` | 卡帶 ROM（高區視圖），`$F80000–$F80FFF` 同樣可覆疊 IPL |
 | `$FC0000–$FCFFFF` | **Work RAM 64 KB**，`mirror(0x30000)` → `$FC/FD/FE/FFxxxx` 皆映射同一 RAM |
 
@@ -52,9 +52,9 @@
 - 卡帶 SRAM 固定 32768 bytes 另獲 (a) 確認（Bcan 卡帶存檔必須恰好 32768 B）。
 - **物理 VRAM 與 CPU 視窗須分開**：早期板級筆記記錄兩顆 `UM61512`
   （合計 128 KiB），`PCGAM 16000-2A` 的照片／電路圖則是兩顆 `UM611024`
-  （合計 256 KiB）；目前只確認 68k 線性視窗為 128 KiB，未證實額外容量的
-  bank/consumer。完整 revision 與元件表見
-  [hardware-implementation-sources.md](hardware-implementation-sources.md#21-vram-revision-差異)。
+  （合計 256 KiB）。`PPU.sch` 已確認 UM6618 `VRAM_A17` 直連兩顆 SRAM `A16`，所以上半部
+  可被視訊 ASIC 實際定址；仍未證實其 register／renderer／DMA consumer，也未證實 CPU
+  window bank switching。詳見 [vram-architecture.md](vram-architecture.md)。
 
 ## 3. UM6618 視訊暫存器（b，基址 $F00000，offset 為 byte）
 

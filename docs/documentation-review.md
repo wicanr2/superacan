@@ -9,7 +9,7 @@
 | UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ 定義本輪補強 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
 | UM6619 | 主要 PCM／DMA／timer 可實作 | MAME sound device＋本地遊戲 driver | envelope／release 仍需實機或更多 driver consumer |
 | 卡帶／SRAM | raw ROM、雙 part、32 KiB fallback 已知 | MAME software list＋板級 schematic | 實拍各型卡帶 PCB，確認哪些 serial 真有 SRAM／電池 |
-| 主機板 | 16000-2A schematic、板照與 revision 差異已有 | `superacan-notes`、Vadot pinout | 額外 VRAM bank 需走線／logic capture，網頁規格無法解決 |
+| 主機板 | 16000-2A schematic 已證實 UM6618 `VRAM_A17` 接 SRAM `A16` | `superacan-notes` `PPU.sch` | 以 ROM consumer／logic capture 找出誰產生最高位；不再把配線列為未知 |
 | 類比輸出 | 元件與近似邊界已知 | UM70C171、KA2195D datasheet | 要精確只能量測 UM70C188／實機 composite capture |
 | 歷史／發售資料 | 基本年份與發行商可由 catalog 固定 | MAME software list | 當年新聞／廣告仍需有授權的掃描與館藏 provenance |
 
@@ -28,7 +28,7 @@
 
 - UM6618／UM6619 完整 register manual、netlist／Verilog；
 - UM70C188 原廠資料表；
-- 16000-2A 額外 128 KiB VRAM 的 bank select；
+- 16000-2A 額外 128 KiB VRAM 的 register／renderer／DMA consumer（最高位配線已知）；
 - UM6650 `$09/$0C` 到 cartridge pins 的完整時序；
 - FRC 真實公式、UM6619 envelope／release 與類比混音增益。
 

@@ -45,7 +45,7 @@
 | U13 `53.693175 MHz` oscillator | 主振盪器 MCLK | 必要 | `PPU.sch`／板照 (p)；CPU 分頻以 Bcan (a) 為準，不採 MAME TODO 值 |
 | U1/U2 `UM62256` | 兩顆 32K×8，組成 64 KiB、16-bit Work RAM | 必要 | `CPU.sch` (p)；`$FC0000–$FCFFFF` 為 (a) |
 | U11 `UM62256` | 一顆 32K×8 sound RAM | 必要 | `APU.sch` (p)；65C02 映射與 mirror 行為為 (a)+(b) |
-| U5/U6 `UM611024`（16000-2A） | 各 128K×8，物理裝片合計 256 KiB、16-bit VRAM | 必要 | `PPU.sch`／板照 (p)；CPU 視窗只有 128 KiB，額外容量的選擇方式未知 |
+| U5/U6 `UM611024`（16000-2A） | 各 128K×8，物理裝片合計 256 KiB、16-bit VRAM | 必要 | `PPU.sch`／板照 (p)；UM6618 `VRAM_A1..A17` 直連 SRAM `A0..A16`，CPU 視窗仍只有 128 KiB |
 | U14 `LF347` | 四路 JFET op-amp，音訊類比放大／濾波 | 通常可省略 | `APU.sch` (p)；數位模擬輸出 PCM 後由宿主混音 |
 | U16/U17/U18/U19/U20/U21 | `74F08`、`74F32`、兩顆 `74LS164`、`7406`、`74F14`；手把 shift／buffer 邏輯 | 需重現行為，不需逐閘模擬 | `PAD.sch` (p)；可直接實作 16-bit latch／shift 契約 |
 | 卡帶 `UM6650` | 16-byte key ROM、32-byte RAM 與授權／lockout 輸出 | 開機必要 | 卡帶電路圖 (p)、IPL (a)、MAME device (b)；MAME 埠角色有已知錯誤 |
@@ -57,12 +57,17 @@
 
 較早的板級筆記把 U5/U6 記為兩顆 `UM61512`（各 64K×8，合計 **128 KiB**）；
 `PCGAM 16000-2A` 的照片與電路圖則標示兩顆 `UM611024`（各 128K×8，物理合計
-**256 KiB**）。因此目前只能分開陳述：
+**256 KiB**）。重新追查 `PPU.sch` 的 net 後，可進一步分開陳述：
 
 1. 68k 的 `$F40000–$F5FFFF` 可見視窗是 **128 KiB**，已由 Bcan 與 MAME bus map 支持；
 2. 至少一個 `16000-2A` revision 的物理 VRAM 裝片容量是 **256 KiB**；
-3. 額外位址是否供 UM6618 內部 bank、ROZ、sprite 或其他用途，**未知**；在追出選擇端與
-   consumer 前，不可把 256 KiB 全部暴露成線性 68k VRAM。
+3. UM6618 的 `VRAM_A1..A17` 分別接到兩顆 SRAM 的 `A0..A16`；其中最高位
+   `VRAM_A17` 確實接到 `A16`，故上半 128 KiB 在電氣上可由 UM6618 定址，並非只裝了較大
+   SRAM 卻把最高位綁死；
+4. 尚未證實的是哪個 register、renderer 或 DMA 路徑產生 `VRAM_A17`，以及 68k 視窗能否
+   切換該半區。在 consumer 被追出前，不可把 256 KiB 全部暴露成線性 68k VRAM。
+
+地址線證據、Motorola CPU 邊界與建議模擬模型見 [vram-architecture.md](vram-architecture.md)。
 
 Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatible `UM62256`；
 兩者組織均為 32K×8，故不改變已確認的 64 KiB 邏輯容量。

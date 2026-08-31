@@ -44,7 +44,7 @@
 | 副 CPU | WDC **65C02** @ **3.579545 MHz**（(a) 定案；早期資料誤記 MOS 6502） | 見 §4、docs/sound-driver.md |
 | 主記憶體 | 64 KiB Work RAM | 2×32K×8 板級證據 (p)＋Bcan `$FC0000–$FCFFFF` (a)；舊網頁 256 KiB 說法不採用 |
 | 副記憶體 | 32 KB | |
-| VRAM | 68k 可見視窗 128 KiB；`PCGAM 16000-2A` 板為 2×`UM611024`，物理合計 256 KiB；額外 bank 用途待查證 | 較早板級筆記為 2×`UM61512`、合計 128 KiB，可能有 revision 差異 |
+| VRAM | 68k 可見視窗 128 KiB；`PCGAM 16000-2A` 板為 2×`UM611024`，物理合計 256 KiB；UM6618 `VRAM_A17` 接 SRAM `A16`，上半部 consumer 待查證 | 較早板級筆記為 2×`UM61512`、合計 128 KiB，可能有 revision 差異；見 docs/vram-architecture.md |
 | DMA | 主機 DMA **2 通道**（(b) MAME 實作；外界流傳 8 組之說待查證） | 另有 UM6618 內部 sprite DMA |
 | 繪圖晶片 | UMC **UM6618**（背景與動畫處理器） | 四層背景、精靈透明/縮放 |
 | 音效晶片 | UMC **UM6619**（音樂與音訊處理、周邊） | |
