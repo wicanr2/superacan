@@ -127,7 +127,7 @@ CPU 寫 UM6618 registers / 128 KiB 可見 VRAM / 256-entry palette
 - vpos、奇偶幀、vblank／raster pending 都屬 device state；讀取特定 status register 或 68k
   interrupt acknowledge 才解除對應事件。
 
-仍未知：16000-2A 額外 physical VRAM bank、精確 color mix、部分 sprite clipping／scaling、第二
+仍未知：16000-2A 額外 physical VRAM 的內部 consumer（`VRAM_A17` 配線已確認）、精確 color mix、部分 sprite clipping／scaling、第二
 window 與部分 ROZ table。應以具名遊戲畫面建立窄測試，不用 SFC／Mega Drive 行為補洞。
 
 ## 7. UM6619 音效 ASIC

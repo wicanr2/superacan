@@ -98,3 +98,12 @@
   定址，推翻「只是換成較大 SRAM、上半部未接」的候選解釋。
 - 新增 `docs/vram-architecture.md`，明確區分 128 KiB CPU window 與 256 KiB physical VRAM；
   register／renderer／DMA consumer 仍未知，BIOS 因不初始化視訊硬體而無法回答。
+
+## 2026-08-31：其他晶片板級證據方法複查
+
+- 在無網路、唯讀 Docker 容器內解析固定 `superacan-notes` commit 的五份 Eagle schematic，
+  逐 net 對照 CPU、Work RAM、VRAM、sound RAM、UM6618、UM6619、UM6650 與手把 glue logic。
+- 新增 `docs/hardware-evidence-method.md`：列出每顆晶片由接線可證實的機制、仍需的
+  producer／consumer 或實機證據，以及不可從其他 68000 主機類推的界線。
+- 新升格的板級結論：UM6619 接完整 68k bus/control/arbitration，並產生 Work RAM byte-lane
+  selects、獨占 sound RAM bus；因此它是 APU／I/O 之外的主要 system／memory controller。

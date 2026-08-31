@@ -68,6 +68,8 @@
    切換該半區。在 consumer 被追出前，不可把 256 KiB 全部暴露成線性 68k VRAM。
 
 地址線證據、Motorola CPU 邊界與建議模擬模型見 [vram-architecture.md](vram-architecture.md)。
+其他晶片能由相同方法確認到什麼程度，見
+[hardware-evidence-method.md](hardware-evidence-method.md)。
 
 Work RAM 的早期板筆記使用 `W24257S`，16000-2A 圖則使用 pin-compatible `UM62256`；
 兩者組織均為 32K×8，故不改變已確認的 64 KiB 邏輯容量。
