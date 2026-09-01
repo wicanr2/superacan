@@ -71,13 +71,28 @@ MAME 與 Bcan 對同一組埠有部分不同命名；下表把兩邊並列，衝
 | `$E90018/19` | 讀回 `soundcpu total_cycles % 0xFFFF`；註記 formduel 用它捲動雨層，視為亂數源 | **DMA 取樣播放位置**（依模式即時計算，clamp 到 `$E90016` 值） |
 | `$E9001C/1D` | bit3→hiview lockout、bit2→internal ROM lockout?、bit1→loview lockout、bit0 sound reset | overlay 控制（`sub_1400A3610`）；bit1/bit3 為單向 latch (a) |
 
-**`$E90014/$E90016` 的兩套解讀尚未定案。** Bcan 當成取樣 DMA 位址暫存器，MAME 當成 FRC
-timer 的 control/frequency 並以此觸發 68k IRQ3。ROM producer 掃描（word-swap 還原後的
-`move.w #imm,$00E90014` 立即值）給出四個具名寫入點：Speedy Dragon `$30D4`←`$A200`、
-`$3476`←`$A0D6`；Formosa Duel `$5EB4`←`$A000`；Journey to the Laugh `$FC6B4`←`$A0D6`。
-MAME 的啟用條件是 `(control & $FF00) == $A200`，故本地八款中只有 Speedy Dragon 那條路徑
-會真的排程 IRQ3。這些值的形狀較接近模式字而非位址，但在同一暫存器上做動態 trace 之前，
-兩套解讀都不升格。
+**`$E90014/$E90016/$E90018` 是同一個計數器（(a)，2026-09-01 由 ROM producer／consumer 定案）。**
+三款遊戲的用法互相印證：
+
+- **Speedy Dragon**：`$30CE` `move.w d0,$E90016` 接 `$30D4` `move.w #$A200,$E90014`，
+  是「以 d0 設週期並啟動」的小常式；卡帶 IRQ3 向量指向 `$3454`，內容是
+  `addq.b #$1,$FCE00E` + `rte`，而 `$30DE` 是 `tst.b $FCE00E` / `beq` 的等待迴圈——
+  計時器語意在軟體層閉合。另一組模式在 `$346E`（週期 0）＋`$3476`（control `$A0D6`）。
+- **Formosa Duel**：`$5EB4` 寫 control `$A000`、`$5EBC` 寫週期 `$FFFF`（其 IRQ3 向量只是
+  `rte`），並在 `$6076`／`$607E` 連讀兩次 `$E90018` 用 `swap` 拼成 32-bit 存進 `$FFFF28`
+  （亂數種子的形狀），又在 `$868A`／`$8696` 把讀值加到 `$F00124`／`$F00126`
+  （tilemap 1 的 scrollx／scrolly）——與 MAME 註解「formduel 用它捲動雨層」完全對上。
+- **Journey to the Laugh**：`$FC6AC` 寫週期 `$8FC`、`$FC6B4` 寫 control `$A0D6`，接著
+  `$E90010=$C0C0` 並把 SR 降到 `$2000`；全 ROM 有 22 處讀 `$E90018`。
+
+因此 `$E90014` 是計數器控制、`$E90016` 是週期／重載值、`$E90018` 讀回目前計數值，
+到期拉起 68k IRQ3。MAME 的 FRC 命名成立；Bcan 把 `$E90014/16` 標成 DMA 位址暫存器、
+把 `$E90018` 標成取樣播放位置，是同一個計數器的另一種命名（它 clamp 到 `$E90016` 的行為
+正好等於「計數不超過週期」）。
+
+仍未定案的只有**真實週期公式**：MAME 的 case table 自標 HACK。Speedy Dragon 的
+「`$30CE` 設週期 → `$30DE` 等 N 個 tick」是目前最好的校準入口，因為它把週期值與一段
+可觀察的等待時間綁在一起。
 
 引用 MAME FRC case table 時另注意：`update_frc_state` 的 period 寫成
 `m_frc_control & 0xff << 16`，依 C++ 運算子優先序等於 `control & 0x00ff0000`，對 16-bit
@@ -175,14 +190,25 @@ U11 是單顆 `UM62256`（32K×8），逐 net 檢查只有 `SNDRAM_A0..A14`，�
 `$8400` 實際落在實體 `$0400`——正好是被 I/O 頁蓋住、無法由 `$0400` 觸及的那 256 bytes，
 因此 `$8400` 會是使用該塊 RAM 的唯一視圖，而 I/O 解碼必須看 A15。
 
-尚未證實的是：I/O 是否真的以 A15 參與解碼；是否有遊戲把 `$xxxx` 與 `$8000+xxxx` 當成兩塊
-不同記憶體同時使用（若有，就推翻 alias 模型，或指出板上另有未記錄的記憶體）。三個現有
-實作都配置 64 KiB，所以 alias 與否在已驗證路徑上沒有可觀察差異；要定案需實機量測或更多
-ROM consumer。
+**A/B 實驗（2026-09-01，software-observed）**：在 superacan-emu 加入只對 RAM 存取丟掉 A15
+的診斷模式（I/O 解碼仍用完整 65C02 位址）後，Boom Zoo、Monopoly、Speedy Dragon、
+Formosa Duel 各跑 1200 幀完整 BIOS 路徑。兩種模型下 68000／65C02 指令數、`vram_sha256`、
+`framebuffer_sha256` 與 IRQ ack 計數完全相同；唯一差異是 Boom Zoo 的音訊
+（`audio_nonzero` 453046 → 453000，約 0.01% 樣本）。
+
+同一輪的對撞偵測（記錄同一實體 cell 先後被上下半區寫入）給出更精確的定位：Monopoly、
+Speedy Dragon、Formosa Duel 為零；Boom Zoo 恰好兩個 cell —— `$040A`／`$040B`，也就是
+65C02→68k mailbox 旗標與該遊戲複製到 `$8400` 起的歌曲位址表（sound-driver.md §4.1）
+在 alias 模型下會共用同一塊儲存。
+
+因此目前狀態是：**現有可執行路徑幾乎分不出兩種模型**，唯一可量測的分歧點是 Boom Zoo 的
+`$840A/$840B`。定案方法是在 Bcan 或實機的同一狀態下，寫入 `$8400+n` 之後看 `$E9000C`／
+`$E8040A` 讀回什麼。在那之前兩種模型都不升格，模擬器維持 64 KiB 配置為預設。
 
 ## 6. 中斷（(b) MAME driver＋(a) 實作驗證）
 
-- 68k：**IRQ1**=expansion、**IRQ2**=cartridge、**IRQ3**=FRC timer（`$E90014/16`，見 §2.1）、
+- 68k：**IRQ1**=expansion、**IRQ2**=cartridge、**IRQ3**=FRC timer（`$E90014/16`，見 §2.1；Speedy Dragon 的 `$3454` handler 與等待迴圈已
+  在軟體層證實）、
   **IRQ4**=UM6618 可視線（vpos<240，需 `$E90010` bit4）、**IRQ5**=UM6618 line-on／line-off
   觸發（`$F0000A`／`$F0000C`）、**IRQ6**=sound CPU→main mailbox（65C02 寫 `$040A`）、
   **IRQ7**=vertical retrace（vpos 240，需 `$E90010` bit7）。IRQ1／IRQ2 尚無本地 consumer。

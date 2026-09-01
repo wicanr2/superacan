@@ -83,6 +83,8 @@ The Son of Evil 在 vblank handler 有明確檢查」。因此做 bit 3 的 A/B 
 area 與 `$F00008` video flags（本檔 `$74C8E` 寫 `$1080`），避免把顯示區高度差異誤讀成
 pixel mode 的效果。
 
+這個 A/B 需要一個會消費 bit 3 的 renderer；§7 已確認目前兩個公開實作都沒有。
+
 ## 6. deprecated oracle 動態 trace（a，software-observed）
 
 在 `superacan-emu` deprecated C++ oracle 的 16-bit UM6618 write path 加入純記錄探針；探針
@@ -157,3 +159,41 @@ symbol 編碼及通用終止標記仍未形式化，尚不能宣稱整個 F003 �
 1. 把 `$73B44` header／table 與 `$73BE8` bitstream 形式化成離線解碼器，逐 byte 驗證
    `$FFFFB800–$FFFFDC55`；
 2. 在同一 save state 對 bit 3 做一次性 A/B renderer probe，比較 frame／VRAM／palette hashes。
+
+## 7. 可用 oracle 的邊界（2026-09-01）
+
+要判斷 bit 3 是否改變像素格式，必須有一個**會消費該位元**的參考實作。目前兩個候選都沒有。
+
+**MAME（固定 `6ae579a`）**：`m_pixel_mode = data & 0x18` 只在兩處被讀——`video_r` 對 `$1F0`
+的讀回，以及 `if (m_pixel_mode & 0x10)` 的 popmessage。render path 不引用它。相對地
+`m_gfx_mode` 有 `get_tilemap_region()` 的 consumer（`layer0_mode[8] = {2,1,0,1,0,0,0,0}`、
+`layer1_mode[8] = {2,1,1,1,2,2,2,2}`），可見兩者待遇不同。
+
+**Bcan 0.0.8b**：以 IDA Pro 9.4 對本機 `Bcan.exe.i64` 實測（`idat -A -S`，Hex-Rays）。
+`$F001F0` 的寫入經 `sub_1400A8FA0` → `sub_1400A9200`，在該處拆成
+`*(BYTE *)(video+594) = value & 0x18`（pixel mode）與 `*(BYTE *)(video+595) = value & 7`
+（gfx mode），與 MAME 完全相同。對整個 `.text` 掃描這兩個 byte 欄位的直接結構位移存取，
+consumer 只有三類：
+
+| 函式 | 角色 |
+|---|---|
+| `sub_1400A9200` | 暫存器寫入時的解碼（唯一 producer，另有 `sub_1400AB9A0` 於 state restore 寫回） |
+| `sub_1400A96E0` | 狀態一致性驗證器：把 raw register file（`video+0..0x1FF`）逐欄比對 `video+512` 起的解碼鏡像，其中 `(reg$1F0 & 0x18) == byte@594`、`(reg$1F0 & 7) == byte@595` |
+| `sub_1400AAC80` | 即時存檔序列化（把兩個 byte 交給 `sub_1400AA6B0`） |
+
+286 KB 的 renderer `sub_1400B1160` **沒有**讀取這兩個欄位；它出現的 `0x1F0` 全部是立即值
+（`or reg,1F0h`）與堆疊位移，不是暫存器檔的結構存取。
+
+**因此**：以 Bcan 為 oracle 觀察 F003 的畫面，無法回答 bit 3 的問題。實測 20 張截圖
+（`docker/bcan-oracle.sh`，The Son of Evil，每 6 秒一張共 2 分鐘）的相異顏色數為
+1／15／82／15／14／13／14／14／60／58／58／59／58／59／1／15／118／15／14／14，
+全部遠低於 256，看不到超出調色盤的輸出——但這只證明 Bcan 的 renderer 不消費 bit 3，
+不能推論硬體行為。
+
+**方法限制**：上述掃描只涵蓋直接的結構位移存取（`[reg+252h]`／`[reg+253h]` 這種形式）。
+`gfx_mode` 同樣沒有在 renderer 出現，合理推測 Bcan 把色深／region 選擇放在 VRAM／tile
+decode 階段，但本輪沒有追指標間接路徑，不能宣稱「Bcan 完全不使用 gfx mode」。
+
+**下一步只剩硬體**：在實機上以同一 ROM 狀態切換 bit 3 並擷取 UM6618→UM70C188 的
+`P0–P7`／`PCLK`，或量測 composite 輸出。在那之前，`$F001F0` bit 3 維持
+`unknown pixel mode bit 3`，不得命名為 TrueColor enable。

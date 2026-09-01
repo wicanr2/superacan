@@ -52,6 +52,18 @@
    只有命名不同，與 memory-map.md §7 的位元序吻合。
 9. 引用 MAME FRC case table 時要注意其 period 因運算子優先序實際只等於 `frequency`。
 
+10. **`$E90014/16/18` 定案為同一個計數器**（memory-map.md §2.1）：Speedy Dragon 的
+    「設週期→啟動→IRQ3 handler 累加 `$FCE00E`→等待迴圈」閉合了計時器語意；Formosa Duel
+    把 `$E90018` 讀值加到 tilemap 1 的 scroll 並用兩次讀值拼亂數種子。Bcan 的 DMA 位址／
+    取樣播放位置命名是同一顆計數器的別名。真實週期公式仍未知。
+11. **sound RAM 32 KiB alias 假說做過一次 A/B**（memory-map.md §5.1）：四款 ROM 各 1200 幀，
+    除 Boom Zoo 約 0.01% 音訊樣本外全部相同；唯一對撞點是 Boom Zoo 的 `$040A/$040B`。
+
+12. **F003 pixel-mode bit 3 的 oracle 邊界已釐清**（f003-video-mode.md §7）：MAME 與 Bcan
+    都只把 `$F001F0` 解碼成 pixel/gfx mode 欄位供讀回、存檔與一致性檢查，renderer 不消費；
+    Bcan 端以 IDA 實測，consumer 只有解碼、狀態驗證器與存檔序列化三處。因此軟體 oracle
+    無法回答此題，下一步只剩實機訊號量測。
+
 外部來源複查：`supracan.cpp`、`umc6650.cpp`、`umc6619_sound.cpp` 的固定 commit `6ae579a`
 與 2026-09-01 的 master 逐 byte 相同；`superacan-notes` 仍為 `63731a2`、`angelosa/hw_docs`
 仍為 `1b9e8fe`。固定引用有效，不需重查；可補的內容都在已固定的原始碼裡。

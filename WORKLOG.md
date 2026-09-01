@@ -1,5 +1,43 @@
 # 工作歷程
 
+## 2026-09-01：三個未定案項目的補證
+
+- 目標：依序處理 sound RAM 32／64 KiB、`$E90014/16` 的兩套解讀、F003 pixel-mode bit 3。
+
+### 1. sound RAM alias（部分定案）
+
+- 靜態：以 word-swap 還原映像掃 `$00E8xxxx`，把上下半區依 mod 0x8000 對撞，候選全部落在
+  圖形／指標資料，指令層只有高半區的 `lea $E8F000`；靜態不足以判別。
+- 動態：在 superacan-emu 加入 `--sound-ram-alias` 診斷模式與對撞偵測後，四款 ROM 各 1200 幀
+  A/B。兩種模型的指令數、VRAM、framebuffer 與 IRQ ack 完全相同；唯一差異是 Boom Zoo 音訊
+  約 0.01% 樣本，對撞只有 `$040A/$040B`（mailbox 旗標 vs `$8400` 歌曲位址表）。
+- 結論寫入 memory-map.md §5.1：現有路徑分不出兩種模型，唯一可量測分歧點已具名。
+
+### 2. `$E90014/$E90016/$E90018`（定案）
+
+- 以 Capstone 反組譯四個寫入點與其上下文、卡帶 autovector 表與 `$E90018` 的 consumer。
+- Speedy Dragon：`$30CE` 設週期、`$30D4` 啟動、IRQ3 向量 `$3454` 做 `addq.b #1,$FCE00E`，
+  `$30DE` 是等待該 tick 的迴圈——計時器語意在軟體層閉合。
+- Formosa Duel：`$5EB4/$5EBC` 寫 `$A000`／`$FFFF`，在 `$6076/$607E` 連讀兩次 `$E90018` 拼
+  32-bit 當種子，在 `$868A/$8696` 把讀值加到 `$F00124/$F00126`（tilemap 1 scroll），與 MAME
+  「formduel 用它捲動雨層」的註解對上。
+- Journey：`$FC6AC/$FC6B4` 設週期 `$8FC`＋control `$A0D6`，接著開 `$E90010=$C0C0` 並降 SR。
+- 結論：三個位址是同一個計數器（控制／週期／目前值），到期拉 IRQ3；Bcan 的 DMA 位址與
+  取樣播放位置命名是同一顆計數器的別名。真實週期公式仍未知，Speedy 的設週期＋等待迴圈
+  是最好的校準入口。
+
+### 3. F003 pixel-mode bit 3（判定為軟體 oracle 無解）
+
+- 用 emu repo 的 Bcan oracle 管線跑 The Son of Evil，2 分鐘 20 張截圖，相異顏色數最高 118，
+  全部遠低於 256。
+- 為判斷這個否定結果是否有意義，以 IDA Pro 9.4（`ida-pro-9.4-idapython:locked-v1`）對
+  `Bcan.exe.i64` 實測：`$F001F0` 的寫入在 `sub_1400A9200` 拆成 `& 0x18`／`& 7` 兩個 byte
+  欄位（video+594／+595），而整個 `.text` 對這兩欄位的直接存取只有解碼、狀態一致性驗證器
+  `sub_1400A96E0` 與存檔序列化 `sub_1400AAC80`；286 KB 的 renderer 不讀它們。MAME 同理。
+- 結論寫入 f003-video-mode.md §7 與 palette-dac.md §5：沒有可用的軟體 oracle，下一步只剩
+  實機 `P0–P7`／`PCLK` 擷取或 composite 量測。
+- 方法限制已標明：掃描只涵蓋直接結構位移，未追指標間接路徑。
+
 ## 2026-09-01：知識庫正確性稽核與外部來源複查
 
 - 目標：逐項複驗 `docs/` 的斷言與證據等級，找出互相矛盾與過期結論，並用外部原始碼／

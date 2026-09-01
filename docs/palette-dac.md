@@ -76,6 +76,10 @@ direct-color 通常需要多個 PCLK 或特殊 multiplexing；真正 framing 必
 - **已證實**：U3 型號、UM6618↔U3 基本 pins、indexed palette 的現行軟體行為。
 - **強推論**：UM70C171 datasheet 可描述 UM70C188 的 pin-compatible 基本介面。
 - **假說**：`$F001F0` bits 3–4 控制 UM70C188 high／true-color path。
+- **已排除的捷徑**：MAME 與 Bcan 都只把 bits 3–4 解碼成欄位後供讀回、存檔與一致性檢查，
+  renderer 不消費它（Bcan 端已以 IDA 實測，見
+  [f003-video-mode.md](f003-video-mode.md) §7）。因此沒有任何可用的軟體 oracle 能回答
+  這個假說，只能靠實機訊號或資料表。
 - **未知**：UM70C188 command registers、multiplexing，以及正式遊戲是否使用特殊模式。
 
 ## 6. 本地 ROM producer 掃描（a，靜態）
