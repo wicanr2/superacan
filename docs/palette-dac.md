@@ -77,10 +77,12 @@ direct-color 通常需要多個 PCLK 或特殊 multiplexing；真正 framing 必
 - **強推論**：UM70C171 datasheet 可描述 UM70C188 的 pin-compatible 基本介面。
 - **假說**：`$F001F0` bits 3–4 控制 UM70C188 high／true-color path。
 - **唯一的軟體 consumer 指向別的方向**：MAME 不消費 bits 3–4；Bcan 只在 ROZ 層消費
-  bit 3——當 pixel mode 恰為 `$08` 且 ROZ 處於 8bpp region 時，改走另一套逐行取值並多做
-  一次 VRAM 遮罩查表（指令位址與表格見 [f003-video-mode.md](f003-video-mode.md) §7）。
-  也就是說，在唯一實作它的程式裡，bit 3 是 ROZ 模式而不是全域 direct color。這削弱
-  本假說，但因為 Bcan 的解讀同樣沒有硬體佐證，兩者都要靠實機訊號才能定案。
+  bit 3——當 pixel mode 恰為 `$08` 且 ROZ 處於 8bpp region 時，該層改成**線性 bitmap**，
+  跳過 tilemap 與 tile 圖形，直接以 `4 × $F00196` 為基底逐像素讀 VRAM（指令位址、公式與
+  自製 ROM 對照實驗見 [f003-video-mode.md](f003-video-mode.md) §7.3、§7.6）。
+  也就是說，在唯一實作它的程式裡，bit 3 是 ROZ 的 tilemap／bitmap 切換，不是全域
+  direct color。這削弱本假說，但因為 Bcan 的解讀同樣沒有硬體佐證，兩者都要靠實機訊號
+  才能定案。
 - **未知**：UM70C188 command registers、multiplexing，以及正式遊戲是否使用特殊模式。
 
 ## 6. 本地 ROM producer 掃描（a，靜態）

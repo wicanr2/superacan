@@ -114,7 +114,7 @@ MAME 與 Bcan 對同一組埠有部分不同命名；下表把兩邊並列，衝
 | `$120–$12E` | Tilemap 1（同格局） |
 | `$140–$14E` | Tilemap 2（同格局） |
 | `$160–$17E` | Tilemap 3／第四 normal layer（MAME 作者逐遊戲筆記已觀察；目前 driver／本地 oracle 尚未接入） |
-| `$180–$19E` | ROZ 層：tile mode、scrollx/scrolly（32-bit）、係數 A/B/C/D、base addr、tile bank、3 個逐行參數表位址 |
+| `$180–$19E` | ROZ 層：mode、tile mode、scrollx/scrolly（32-bit）、係數 A/B/C/D、map base、tile bank／bitmap base、3 個逐行參數表位址。逐暫存器解碼見 §3.1 |
 | `$1D0–$1DE` | Window 0/1：control、start addr、scrollx、scrolly |
 | `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；F003 實際在 `$0001/$0009` 間切換 bit3；`$E90014/$E90016` 不在 UM6618 window，其 FRC／DMA 位址兩套解讀見 §2.1 |
 
@@ -125,6 +125,24 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
 來自 MAME driver 作者的逐遊戲 register observation
 [`pergame.md`](https://github.com/angelosa/hw_docs/blob/1b9e8fe813b29f196ff04ca9c194319ced779f4c/funtech_superacan/pergame.md)，
 證據層級仍是研究觀察，不是原廠資料表。
+
+### 3.1 ROZ 暫存器的解碼倍率（a，Bcan `sub_1400A9200`）
+
+Bcan 在寫入時就把部分 ROZ 暫存器換算成內部位址，倍率不一致，逐條列出以免誤植：
+
+| 暫存器 | 內部欄位 | 換算 | 用途 |
+|---|---|---|---|
+| `$180` | +544 | 原值 | mode：bit15-13 優先度、bit11-8 尺寸、bit5 wrap、bit4-2 mosaic 表選擇、bit1-0 region |
+| `$182` | +546 | 原值 | tile mode：bit15／bit14／bit6 選逐行表路徑，低 4 bit 為 bitmap 模式的 palette bank |
+| `$184`／`$186` | +550／+548 | 原值 | scroll X（24-bit 有號，`$186` 為高位） |
+| `$188`／`$18A` | +554／+552 | 原值 | scroll Y |
+| `$18C`–`$192` | +556–+562 | 原值 | 係數 A／B／C／D（8.8 定點） |
+| `$194` | +564 | **×2** | tilemap map base，最終 byte 位址再 ×2 |
+| `$196` | +568 | 原值 | tile bank（renderer 取 bit15-12）；bit 3 的 bitmap 模式以其 **×4** 為 byte 基底 |
+| `$198`／`$19A`／`$19E` | +572／+576／+580 | **×4** | 三個逐行參數表位址 |
+
+`$F001F0` bit 3 造成的 ROZ bitmap 路徑（公式、指令位址與自製 ROM 驗證）見
+[f003-video-mode.md](f003-video-mode.md) §7.3、§7.6。
 
 ## 4. DMA（b）
 

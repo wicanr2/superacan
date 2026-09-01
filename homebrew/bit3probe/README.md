@@ -32,26 +32,34 @@ python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
 ## ROM 做了什麼
 
 1. 寫入 256 色調色盤：`index i` → `r = i & 31`、`g = (i >> 3) & 31`、`b = 31 - (i & 31)`。
-   `index 0` 因此是純藍，這同時也是未繪製區域（backdrop）的顏色。
-2. 寫入四個 8bpp tile 與 32×32 的 ROZ tilemap。tile 圖樣對水平與垂直翻轉皆對稱，
-   因為 `$F00180` 的 region 位元同時是 flip 位元，對稱圖樣可避免翻轉差異混進判讀。
-3. 設定 ROZ：identity 變換（A=D=`$0100`、B=C=0）、scroll 0、map base 在 VRAM word `$1000`。
-4. 主迴圈輪詢 `$F00000` bit 15 等幀，每 180 幀把 `$F001F0` 在 `$0001`／`$0009` 之間切換，
-   並把調色盤第 255 號改成紅（bit 3 開）或藍（bit 3 關）作為相位標示。
+2. 寫入四個 8bpp tile 與 32×32 的 ROZ tilemap。tile 圖樣對水平與垂直翻轉皆對稱，因為
+   `$F00180` 的 region 位元同時是 flip 位元，對稱圖樣可避免翻轉差異混進判讀；tilemap
+   不使用 tile 0。
+3. 把 tile 之後的整片 VRAM 填成索引 200。加上第 2 點，128 KiB 視窗內沒有任何零 byte，
+   因此「畫面空白」只可能是整層未繪製，不可能是取到零值。
+4. 設定 ROZ：identity 變換（A=D=`$0100`、B=C=0）、scroll 0、map base 在 VRAM word `$1000`。
+5. 主迴圈輪詢 `$F00000` bit 15 等幀，每 300 幀把 `$F001F0` 在 `$0001`／`$0009` 之間切換，
+   並把 backdrop（調色盤索引 0）設成紅（bit 3 開）或綠（bit 3 關）。單看一張截圖的底色
+   就能判斷相位，整層沒畫出來時也不會誤判。索引 255 恆為白，作為地圖中央的標示方塊。
 
-## 第一輪結果（2026-09-01）
+## 結果（2026-09-01）
 
 同一顆映像：
 
 | 執行環境 | bit 3 = 0 | bit 3 = 1 |
 |---|---|---|
-| 本專案 Go renderer | 畫出 ROZ 圖樣 | 畫出 ROZ 圖樣（只有標示方塊變色） |
-| Bcan 0.0.8b | **整片 backdrop（palette 0），ROZ 層不出現** | 畫出 ROZ 圖樣 |
+| Bcan 0.0.8b | tile 圖樣（一般 tilemap 路徑） | 整片索引 200，即 VRAM 填值（線性 bitmap 路徑） |
+| `../superacan-emu` | 同上 | 同上（實作 bitmap 路徑後兩相位皆逐像素相同） |
 
-也就是說，在同一組暫存器設定下，**Bcan 只有在 bit 3 設起來時才畫出 8bpp 的 ROZ 層**。
-這是目前第一個可重現、可觀察的 bit 3 行為差異，來源是自製軟體而非商業 ROM。
+也就是說 bit 3 是 ROZ 層的 **tilemap／bitmap 切換**。bitmap 的 byte 基底以對照實驗定位：
+`--roz-tile-bank 0x0800` 把 tilemap 區（高位元組為零、因此透明）造成的橫向條紋從畫面
+第 32–39 列移到第 0–7 列，符合 `4 × $F00196` 與 256 byte 的每列跨距。
 
-尚未定案：確切的閘門條件。`$F00182` bit 8（依反編譯推測為 Bcan 逐行表判斷的一部分）
-設為 1 的變體 C 沒有改變結果，代表閘門不只這一項，或該位元的位置判讀有誤。下一輪要做的是
-把 palette 0 改成與標示不同的顏色（現在 backdrop 與 bit3=0 的標示同為藍色，靠推理才排除
-歧義），並逐一掃 `$F00180`／`$F00182` 的位元組合。
+反編譯側的公式、指令位址與其餘證據見
+[../../docs/f003-video-mode.md](../../docs/f003-video-mode.md) §7.3、§7.6。
+
+## Bcan 的執行方式
+
+Bcan 不吃命令列 ROM 參數，必須走 GUI：`檔案(F)` → 第一項 → 在檔名欄輸入
+`Z:\work\bcan\ROMS\<檔名>`。截圖熱鍵為 F8（`Bcan.ini` 的 `hotkey_screenshot=119`），
+存到 `snap\`。
