@@ -1,5 +1,20 @@
 # 工作歷程
 
+## 2026-09-01：`$F001F0` 在 Bcan 的資料流解出，pixel mode 契約改寫
+
+- 結果：pixel mode 與 gfx mode 都會進入 Bcan 每幀的 renderer snapshot（`+190`／`+191`），
+  各有唯一讀取點。gfx mode 走與 MAME 相同的三張圖層 region 表換算色深；**bit 3 只在 ROZ
+  層生效**——`pixel_mode == $08` 且 ROZ 為 8bpp region 時，改走 24-bit 逐行取值、不加全域
+  ROZ scroll 基底，並多一次以 ROZ tile bank 為基底的 VRAM 遮罩查表。MAME 完全不消費
+  pixel mode，故該路徑是 Bcan 獨有，等級 `confirmed-Bcan`。
+- 因此前一輪「pixel mode 不進入 renderer」與「Bcan 不使用全域 gfx mode」兩項敘述均已作廢，
+  f003-video-mode.md §7 改寫為逐指令佐證的資料流，palette-dac.md 的假說段落同步調整：
+  唯一實作它的程式把 bit 3 當 ROZ 模式，而不是全域 direct color。
+- 新增 [docs/re-method-decompiler-dataflow.md](docs/re-method-decompiler-dataflow.md)：
+  記錄本輪三次「自洽但錯」結論的成因（掃描範圍與存取形式不匹配、把 Hex-Rays `HIWORD`
+  當固定 byte lane、把含 `bp` 的運算元當堆疊過濾掉）與可重用的檢查清單。
+- 工具：`ida-pro-9.4-idapython:locked-v1` headless，`idat -A -S`；分析副本用完刪除。
+
 ## 2026-09-01：兩項實作契約定案（跟隨 Bcan）
 
 - 決定：sound RAM 採 **64 KiB 平面、不遮罩 A15**；`$F001F0` 的 pixel mode 解碼後只供

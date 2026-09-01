@@ -160,62 +160,79 @@ symbol 編碼及通用終止標記仍未形式化，尚不能宣稱整個 F003 �
    `$FFFFB800–$FFFFDC55`；
 2. 在同一 save state 對 bit 3 做一次性 A/B renderer probe，比較 frame／VRAM／palette hashes。
 
-## 7. 可用 oracle 的邊界（2026-09-01）
+## 7. `$F001F0` 在 Bcan 的完整資料流（2026-09-01，IDA 反編譯 + 反組譯逐條驗證）
 
-要判斷 bit 3 是否改變像素格式，必須有一個**會消費該位元**的參考實作。目前兩個公開實作
-都不消費它。
+`$F001F0` 的兩個欄位在 Bcan 0.0.8b 裡都有 renderer consumer，且 **bit 3 只影響 ROZ 層**。
+以下每一步都以指令位址佐證，不只依賴 Hex-Rays 的偽碼。
 
-**MAME（固定 `6ae579a`）**：`m_pixel_mode = data & 0x18` 只在兩處被讀——`video_r` 對
-`$1F0` 的讀回，以及 `if (m_pixel_mode & 0x10)` 的 popmessage。render path 不引用它。
-相對地 `m_gfx_mode` 有 `get_tilemap_region()` 的 consumer
-（`layer0_mode[8] = {2,1,0,1,0,0,0,0}`、`layer1_mode[8] = {2,1,1,1,2,2,2,2}`）。
+### 7.1 解碼與傳遞
 
-**Bcan 0.0.8b**：以 IDA Pro 9.4（`ida-pro-9.4-idapython:locked-v1`，Hex-Rays）對本機
-`Bcan.exe.i64` 追出完整資料流。Bcan 的視訊物件同時保存 raw register file（`video+0..0x1FF`）
-與一份解碼鏡像（`video+512` 起），畫面則由**每幀建立的 snapshot 結構**繪製，renderer 只看
-snapshot、不直接讀視訊物件：
-
-| 位址 | 角色 |
+| 位址 | 動作 |
 |---|---|
-| `sub_1400A8FA0` → `sub_1400A9200` | 暫存器寫入解碼：`*(BYTE *)(video+594) = value & 0x18`（pixel mode）、`*(BYTE *)(video+595) = value & 7`（gfx mode），與 MAME 相同 |
-| `sub_1400A96E0` | 狀態一致性驗證器：逐欄比對 raw register file 與解碼鏡像，其中 `(reg$1F0 & 0x18) == byte@594`、`(reg$1F0 & 7) == byte@595` |
-| `sub_1400AAC80`／`sub_1400AB9A0` | 即時存檔的序列化與還原 |
-| `sub_140082130` | **每幀 snapshot 建構器**：由視訊物件取出 renderer 需要的欄位 |
-| `sub_14009D6E0` | **renderer**：輸入為 snapshot＋輸出緩衝（`a3 == 76800` 即 320×240），先驗證 VRAM `0x20000`、palette 256、window 邊界，再逐層合成 |
+| `sub_1400A8FA0` → `sub_1400A9200` | 寫入時拆欄位：`*(BYTE *)(video+594) = value & 0x18`（pixel mode）、`*(BYTE *)(video+595) = value & 7`（gfx mode），與 MAME 相同 |
+| `sub_1400A96E0` | 狀態一致性驗證器：比對 `(reg$1F0 & 0x18) == byte@594`、`(reg$1F0 & 7) == byte@595` |
+| `sub_140082130` | 每幀 snapshot 建構器：`mov rax,[rdx+29324h]`（video+588..595）→ `shr r8,30h` → `mov [rcx+0BEh],r8w`，把 **pixel mode 放進 snapshot+190、gfx mode 放進 snapshot+191** |
+| `sub_14009D6E0` | renderer：輸入只有 snapshot 與輸出緩衝（`a3 == 76800` 即 320×240） |
 
-決定性的一步在 snapshot 建構器：它以一次 8-byte 讀取取得 `video+588..595`
-（`mov rax, [rdx+29324h]`），其中低 2 byte 是 video flags、byte 6 是 pixel mode、
-byte 7 是 gfx mode。該 qword 的使用方式為：
+全 `.text` 掃描 snapshot 這兩個 byte 的存取，各自只有一個讀取點：
+`14009F422 movzx eax, byte ptr [rbp+0BFh]`（gfx mode）與
+`14009FA8D movzx eax, byte ptr [rcx+0BEh]`（pixel mode），兩者都在 renderer 內。
+
+### 7.2 gfx mode（bit 0–2）：與 MAME 相同的圖層 region 表
+
+renderer 的 tilemap 迴圈用 `gfx_mode & 7` 查表得到 tile region，再由 region 換成色深：
+
+| 圖層 | 表（立即值） | 內容 |
+|---|---|---|
+| 0 | `0x01000102` | `{2,1,0,1,0,0,0,0}` |
+| 1 | `0x0202020201010102` | `{2,1,1,1,2,2,2,2}` |
+| 2 | 常數 | 恆為 `2` |
+
+`byte_140424B88 = {8,4,2,1,1,0,0,0}` 把 region 換成 bits per pixel，pixel mask 則是
+`~(-1 << bpp)`。這三張表與 MAME `get_tilemap_region()` 的 `layer0_mode`／`layer1_mode`／
+layer 2 常數完全一致，因此 **Bcan 與 MAME 在 gfx mode 上沒有分歧**。
+
+### 7.3 pixel mode（bit 3–4）：ROZ 層的替代路徑
+
+renderer 的 ROZ 區塊（`snapshot+112 == 1` 即 ROZ 致能）計算一個旗標：
 
 ```c
-v2 = *(_QWORD *)(a2 + 168740);        // video+588..595
-*(_WORD *)(a1 + 188) = v2;            // snapshot+188 = video flags
-*(_WORD *)(a1 + 190) = HIWORD(v2);    // snapshot+190 = video+590..591
-*(_BYTE *)(a1 + 32)  = (unsigned __int8)v2 >> 7;   // 以下皆為 video flags 的
-*(_BYTE *)(a1 + 52)  = (v2 & 0x40) != 0;           // 圖層致能位元
-*(_BYTE *)(a1 + 72)  = (v2 & 0x20) != 0;
-*(_BYTE *)(a1 + 96)  = (v2 & 8)    != 0;
-*(_BYTE *)(a1 + 112) = (v2 & 4)    != 0;
-*(_BYTE *)(a1 + 160) = (v2 & 2)    != 0;
+LODWORD(v445[0]) = 0x00010204;                       // {4,2,1,0}
+v262 = *((_BYTE *)v408 + 190) ^ 8;                   // pixel_mode ^ 8
+v429 = *((unsigned __int8 *)v445 + (roz_mode & 3));  // ROZ region
+v263 = ((unsigned __int8)v429 | v262) == 0;          // region==0 且 pixel_mode==8
 ```
 
-**byte 6 與 byte 7 完全沒有被用到**——pixel mode 與 gfx mode 都沒有進入 snapshot，因此
-renderer 結構上不可能依賴 `$F001F0`。附帶結論：Bcan 連全域 gfx mode 都不使用，色深與
-tile region 改由各圖層自己的 mode 暫存器決定，這一點與 MAME 的 `get_tilemap_region()` 不同。
+`{4,2,1,0}` 經 `byte_140424B88` 換算即 `(roz_mode & 3)` → `{1bpp, 2bpp, 4bpp, 8bpp}`，
+與 MAME 的 ROZ tile region 對應相同。所以
 
-**因此**以 Bcan 為 oracle 觀察 F003 的畫面無法回答 bit 3 的問題。實測 20 張截圖
-（`docker/bcan-oracle.sh`，The Son of Evil，每 6 秒一張共 2 分鐘）的相異顏色數為
+> **`v263` 為真的條件是：`$F001F0` 的 pixel mode 恰為 `$08`（bit 3 設、bit 4 清），
+> 且 ROZ 層處於 8bpp region。**
+
+該旗標改變 ROZ 的兩件事（已證實由它選擇；為何如此仍未定案）：
+
+1. **逐像素多一次 VRAM 查表**：以 ROZ tile bank（raw `$196`）為基底再取一個像素，
+   與 ROZ tile mode（raw `$182`）低 4 bit 的 palette bank 合成，測試不通過就跳過該像素。
+2. **逐行參數取值改形式**：走 24-bit（3 byte）的逐行取值，且**不加**全域 ROZ scroll 基底；
+   旗標為假時則是原本的 16-bit 形式加基底。
+
+MAME 完全不消費 pixel mode（`m_pixel_mode` 只用於 `$1F0` 讀回與 bit 4 的 popmessage），
+所以這條路徑是 **Bcan 獨有**，證據等級 `confirmed-Bcan`。
+
+### 7.4 對既有假說的影響
+
+F003 寫 `$0009` = gfx mode 1 ＋ bit 3，而該遊戲確實使用 ROZ，與 7.3 的條件相符。
+在唯一會消費該位元的實作裡，bit 3 是**ROZ 層的模式選擇**，不是全域 direct-color 開關；
+這削弱（但未推翻）「bits 3–4 控制 UM70C188 high／true-color path」的假說——
+Bcan 的解讀本身也沒有硬體佐證，它可能只是作者為了讓某些畫面正確而選的模型。
+
+實測 20 張 Bcan 截圖（The Son of Evil，每 6 秒一張共 2 分鐘）相異顏色數為
 1／15／82／15／14／13／14／14／60／58／58／59／58／59／1／15／118／15／14／14，
-全部遠低於 256——這與「Bcan 不消費 bit 3」一致，不能推論硬體行為。
+全部遠低於 256，與「bit 3 在 Bcan 裡不是 direct color」一致。
 
-**實作契約（2026-09-01 定案）**：跟隨 Bcan——`$F001F0` 解碼後保存、供暫存器讀回與
-即時存檔，**不進入 renderer**。等級為 `confirmed-Bcan`。
+### 7.5 仍待硬體
 
-**下一步只剩硬體**：在實機上以同一 ROM 狀態切換 bit 3 並擷取 UM6618→UM70C188 的
-`P0–P7`／`PCLK`，或量測 composite 輸出。在那之前，`$F001F0` bit 3 維持
-`unknown pixel mode bit 3`，不得命名為 TrueColor enable。
-
-**另一項由此衍生的開放問題**：Bcan 的 renderer snapshot 連全域 gfx mode（`$1F0` bit 0–2）
-都不含，代表它以各圖層自己的 mode 暫存器決定色深與 tile region，與 MAME
-`get_tilemap_region()` 的全域規則不同。哪一種才是硬體行為未知；這會直接表現為畫面差分，
-應以 gfx mode 非 1 的遊戲（Sango Fighter 寫 `$0003`）做同畫面比對來釐清。
+Bcan 的 ROZ 解讀是否為硬體行為，需要在實機上以同一狀態切換 bit 3 並擷取
+UM6618→UM70C188 的 `P0–P7`／`PCLK`，或比對同畫面 composite 輸出。在那之前，
+`$F001F0` bit 3 在本庫維持 `unknown pixel mode bit 3`，不得命名為 TrueColor enable；
+若要在模擬器實作，應標為 `confirmed-Bcan` 的相容性選擇。

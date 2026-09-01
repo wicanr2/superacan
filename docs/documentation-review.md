@@ -59,11 +59,12 @@
 11. **sound RAM 32 KiB alias 假說做過一次 A/B**（memory-map.md §5.1）：四款 ROM 各 1200 幀，
     除 Boom Zoo 約 0.01% 音訊樣本外全部相同；唯一對撞點是 Boom Zoo 的 `$040A/$040B`。
 
-12. **F003 pixel-mode bit 3 的 oracle 邊界已釐清**（f003-video-mode.md §7）：Bcan 每幀由
-    `sub_140082130` 建立 snapshot 供 renderer `sub_14009D6E0` 使用；該建構器以一次 8-byte
-    讀取取得 `video+588..595`，只取用低 4 byte（video flags 與圖層致能），**pixel mode 與
-    gfx mode 兩個 byte 未進入 snapshot**。因此 Bcan 的 renderer 結構上不依賴 `$F001F0`，
-    MAME 亦然。軟體 oracle 無法回答此題，下一步只剩實機訊號量測。
+12. **`$F001F0` 在 Bcan 的完整資料流已解出**（f003-video-mode.md §7）：pixel mode 與
+    gfx mode 都會進入每幀 snapshot（`+190`／`+191`），且各自在 renderer 有唯一讀取點
+    （`14009FA8D`／`14009F422`）。gfx mode 用與 MAME 相同的三張 region 表換算色深；
+    **bit 3 只在 ROZ 層生效**——`pixel_mode == $08` 且 ROZ 為 8bpp region 時，改走 24-bit
+    逐行取值並多一次 VRAM 遮罩查表。MAME 完全不消費 pixel mode，故這條路徑是 Bcan 獨有，
+    等級 `confirmed-Bcan`，硬體真相仍待實機訊號。
 13. **Bcan 的 sound RAM 模型已由反編譯確認**（memory-map.md §5.1）：65C02 側以未遮罩的
     16-bit 位址索引同一塊緩衝區、I/O 只在 `$0400–$04FF` 攔截，68k 側轉發完整位址，
     存檔序列化 `0x10000/0x10000/0x8000` 三塊。即 Bcan 假設 64 KiB、無 A15 alias。
