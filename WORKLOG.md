@@ -1,5 +1,17 @@
 # 工作歷程
 
+## 2026-09-01：兩項實作契約定案（跟隨 Bcan）
+
+- 決定：sound RAM 採 **64 KiB 平面、不遮罩 A15**；`$F001F0` 的 pixel mode 解碼後只供
+  讀回與存檔、**不進入 renderer**。兩項等級為 `confirmed-Bcan`，不是 `confirmed-hardware`；
+  硬體側的未決狀態與可否證條件維持記錄在 memory-map.md §5.1 與 f003-video-mode.md §7。
+- 現況核對：`superacan-emu` 的 `machine.Bus` 預設遮罩為 `0xffff`、`chip/umc6618` 的
+  renderer 不使用 bit 3／bit 4，已符合契約，無須改碼；32 KiB alias 開關維持診斷用途。
+  該專案另新增 `docs/sound-ram-model.md` 記錄同一決定。
+- 新開放問題：Bcan 的 renderer snapshot 不含全域 gfx mode，代表它以逐圖層暫存器決定
+  色深與 tile region；本專案文件與 superacan-emu 目前採 MAME 的全域規則。兩者不同，
+  應以 Sango Fighter（`$F001F0 ← $0003`）做同畫面差分釐清，未釐清前不動現行規則。
+
 ## 2026-09-01：Bcan 反編譯確認 sound RAM 模型與 pixel-mode 消費者
 
 - 工具：IDA Pro 9.4（`ida-pro-9.4-idapython:locked-v1`，headless `idat -A -S`，Hex-Rays），

@@ -208,6 +208,14 @@ tile region 改由各圖層自己的 mode 暫存器決定，這一點與 MAME �
 1／15／82／15／14／13／14／14／60／58／58／59／58／59／1／15／118／15／14／14，
 全部遠低於 256——這與「Bcan 不消費 bit 3」一致，不能推論硬體行為。
 
+**實作契約（2026-09-01 定案）**：跟隨 Bcan——`$F001F0` 解碼後保存、供暫存器讀回與
+即時存檔，**不進入 renderer**。等級為 `confirmed-Bcan`。
+
 **下一步只剩硬體**：在實機上以同一 ROM 狀態切換 bit 3 並擷取 UM6618→UM70C188 的
 `P0–P7`／`PCLK`，或量測 composite 輸出。在那之前，`$F001F0` bit 3 維持
 `unknown pixel mode bit 3`，不得命名為 TrueColor enable。
+
+**另一項由此衍生的開放問題**：Bcan 的 renderer snapshot 連全域 gfx mode（`$1F0` bit 0–2）
+都不含，代表它以各圖層自己的 mode 暫存器決定色深與 tile region，與 MAME
+`get_tilemap_region()` 的全域規則不同。哪一種才是硬體行為未知；這會直接表現為畫面差分，
+應以 gfx mode 非 1 的遊戲（Sango Fighter 寫 `$0003`）做同畫面比對來釐清。
