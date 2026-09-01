@@ -1,5 +1,18 @@
 # 工作歷程
 
+## 2026-09-01：ROZ bit 3 分支的可達性量測
+
+- 背景：靜態反組譯確認 Bcan 有 pixel-mode bit 3 的 consumer；另一工作階段則得到「Bcan 沒有
+  使用」的結論。兩者的差別在於「程式碼存在」與「執行期會不會走到」。
+- 量測：在模擬器加純記錄探針，統計每幀 `(reg$1F0 & 0x18) == 0x08`、ROZ 致能、
+  `(roz_mode & 3) == 3` 三者是否同時成立。八款本地 ROM 各 1200 幀，全部為 0；
+  The Son of Evil 是唯一會進 ROZ 8bpp 的（1200 幀中 759 幀），延長到 6000 幀後
+  `pixel bit 3 = 317`、`ROZ 8bpp = 4274`、同時成立仍為 0。
+- 結論：兩層分述——Bcan 程式碼有該 consumer（指令佐證見 f003-video-mode.md §7.3），
+  但在已知軟體路徑上從未執行，實作上等同沒有使用，不新增該分支。
+- 副產品：八款 ROM 開頭都有約 191 幀 `pixel mode == $08`，該期間 ROZ 為 1bpp，
+  對應共用的 A'Can 開機 logo；bit 3 與 8bpp ROZ 在時間上互斥。
+
 ## 2026-09-01：`$F001F0` 在 Bcan 的資料流解出，pixel mode 契約改寫
 
 - 結果：pixel mode 與 gfx mode 都會進入 Bcan 每幀的 renderer snapshot（`+190`／`+191`），

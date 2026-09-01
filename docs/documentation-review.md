@@ -63,8 +63,10 @@
     gfx mode 都會進入每幀 snapshot（`+190`／`+191`），且各自在 renderer 有唯一讀取點
     （`14009FA8D`／`14009F422`）。gfx mode 用與 MAME 相同的三張 region 表換算色深；
     **bit 3 只在 ROZ 層生效**——`pixel_mode == $08` 且 ROZ 為 8bpp region 時，改走 24-bit
-    逐行取值並多一次 VRAM 遮罩查表。MAME 完全不消費 pixel mode，故這條路徑是 Bcan 獨有，
-    等級 `confirmed-Bcan`，硬體真相仍待實機訊號。
+    逐行取值並多一次 VRAM 遮罩查表。MAME 完全不消費 pixel mode，故這條路徑是 Bcan 獨有。
+    但動態量測顯示該分支在本地八款 ROM（各 1200 幀，F003 另跑 6000 幀）**從未被走到**：
+    bit 3 只在共用的開機 logo 段落出現，而該段 ROZ 是 1bpp，與分支要求的 8bpp 互斥。
+    實作上等同「Bcan 沒有使用 bit 3」，不應新增該分支；硬體真相仍待實機訊號。
 13. **Bcan 的 sound RAM 模型已由反編譯確認**（memory-map.md §5.1）：65C02 側以未遮罩的
     16-bit 位址索引同一塊緩衝區、I/O 只在 `$0400–$04FF` 攔截，68k 側轉發完整位址，
     存檔序列化 `0x10000/0x10000/0x8000` 三塊。即 Bcan 假設 64 KiB、無 A15 alias。
