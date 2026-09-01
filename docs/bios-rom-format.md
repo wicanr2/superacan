@@ -50,6 +50,10 @@ revision）以及是否存在其他 BIOS revision；這些是保存來源缺口�
   檢查）→ 跳卡帶入口。Bcan 的「bounded BIOS boot did not reach the
   cartridge entry」(a) 證明開機末端須轉交控制權給卡帶。
   **反組譯已完成**，見 [bios-68k.md](bios-68k.md)。
+- 實體位置線索（尚未定案）：`superacan-notes` 的作者說明把開機碼描述為存放在 UM6619 內部
+  （「code which store inside 6619 chip」），MAME 對 `$E9001C` bit2 亦註記
+  「internal ROM lockout?」。兩者相容，但目前沒有 die shot 或量測直接證明這顆 4 KiB ROM
+  位於 UM6619 而非 UM6618，故僅列線索。
 
 ### 1.3 internal_6502_1/2.bin（各 8 KB）——**已查明：非程式，是取樣資料**
 
@@ -84,7 +88,7 @@ revision）以及是否存在其他 BIOS revision；這些是保存來源缺口�
 | 遊戲 | 大小 | 初始 SSP | 初始 PC |
 |---|---|---|---|
 | Boom Zoo | 512 KB | $00FCFFFE | $00000412 |
-| Formosa Duel | 1 MB | $00FCFEFC | $00000426 |
+| Formosa Duel | 1 MB | $00FCFEFC | $00002416 |
 | Monopoly: Adventure in Africa | 1 MB | $00FCFE00 | $000024C6 |
 | Sango Fighter | 3 MB | $00FCFE00 | $0000250A |
 | Speedy Dragon | 2 MB | $00FCFE00 | $00000C4A |

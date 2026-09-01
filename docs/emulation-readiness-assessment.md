@@ -62,7 +62,7 @@ MAME source 是目前最完整的公開硬體行為骨架，但其 driver 自己
 | `screen_update`／`scanline_cb` | 圖層合成、visible area、raster／vblank | 10.738635 MHz 時脈、HOLD_LINE、不同遊戲的 224／240 線需求 |
 | `update_frc_state` | FRC 已知 case table | 公式是 MAME HACK，不能稱硬體 timer 規格 |
 | `umc6619_sound_device::*` | 16-channel PCM、pitch、address、volume、timer、DMA IRQ | envelope 未實作；以遊戲 driver 修正 reset／IRQ／mailbox |
-| `umc6650_device::*` | key ROM、內部 RAM、address latch | MAME 把 `$EB0D01/$EB0D03` 埠角色解反；以 IPL (a) 為準 |
+| `umc6650_device::*` | key ROM、內部 RAM、address latch | 埠角色與 IPL (a) 一致（device offset = 位址>>1）；`$09/$0C` 對外 pin 仍未建模 |
 | `devices/bus/supracan/*` | 卡帶 slot、raw ROM 與 SRAM 骨架 | Bcan 雙部分 ROM、word-swap、固定 32768-byte SRAM |
 
 ### 3.2 每個重建條目的固定格式

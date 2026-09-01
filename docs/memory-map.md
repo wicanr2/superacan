@@ -27,8 +27,8 @@
 | 位址範圍 | 內容 |
 |---|---|
 | `$000000–$3FFFFF` | 卡帶 ROM（低區視圖）；`$000000–$000FFF` 開機時覆疊 `internal_68k.bin`（4 KB IPL） |
-| `$E80000–$E8FFFF` | 音效共享 RAM（64 KB，68k 以 16-bit 存取；**不做 byte 對調**，(a) 遊戲驅動實測，見 sound-driver.md；word-swap 只存在於 ROM 檔案格式層） |
-| `$E90000–$E9001F` | UM6619 主機端埠（sound host port，含 6502 來的 DMA 請求位址） |
+| `$E80000–$E8FFFF` | 音效共享 RAM 視窗（64 KB，68k 以 16-bit 存取；**不做 byte 對調**，(a) 遊戲驅動實測，見 sound-driver.md；word-swap 只存在於 ROM 檔案格式層）。實體裝片只有 32 KiB，落差見 §5.1 |
+| `$E90000–$E9001F` | UM6619 主機端埠（sound host port）；逐暫存器見 §2.1 |
 | `$E90020–$E9002F` | DMA 通道 0 暫存器 |
 | `$E90030–$E9003F` | DMA 通道 1 暫存器 |
 | `$E90B3C–$E90B3D` | lockout 檢查時的雜訊區（NOP） |
@@ -56,12 +56,42 @@
   可被視訊 ASIC 實際定址；仍未證實其 register／renderer／DMA consumer，也未證實 CPU
   window bank switching。詳見 [vram-architecture.md](vram-architecture.md)。
 
+### 2.1 UM6619 主機端埠 `$E90000–$E9001F`（(b) MAME master／(a) Bcan）
+
+MAME 與 Bcan 對同一組埠有部分不同命名；下表把兩邊並列，衝突項另於表後說明。
+
+| 位址 | MAME `host_um6619_map` (b) | Bcan SystemBus (a) |
+|---|---|---|
+| `$E90004/05` | 讀 sound RAM `$040C/$040D`（65C02 交出的取樣 DMA 請求位址） | 讀取閂（物件 +5168/+5169） |
+| `$E9000A/0B` | 寫入 → 置 65C02 IRQ bit5（命令通知） | 觸發 SoundHostPort 虛函式 |
+| `$E9000C/0D` | 讀 sound RAM `$040A`（DMA 請求旗標）；註記 staiwbbl 清掉 `$E8040A` 後預期讀到 `$FF` | 讀取閂（+5170） |
+| `$E90010/11` | **IRQ mask**：bit7 致能 vblank IRQ7、bit4 致能可視線 IRQ4；其餘位元未知，遊戲多以 byte 寫入。註記 slghtsag 在 BIOS 之後必須設 bit7，否則 address error | 讀寫（+300450 與 +168024 雙寫） |
+| `$E90014/15` | **FRC control** | 16-bit DMA 位址暫存器（+168020） |
+| `$E90016/17` | **FRC frequency** | 16-bit DMA 位址暫存器（+168022） |
+| `$E90018/19` | 讀回 `soundcpu total_cycles % 0xFFFF`；註記 formduel 用它捲動雨層，視為亂數源 | **DMA 取樣播放位置**（依模式即時計算，clamp 到 `$E90016` 值） |
+| `$E9001C/1D` | bit3→hiview lockout、bit2→internal ROM lockout?、bit1→loview lockout、bit0 sound reset | overlay 控制（`sub_1400A3610`）；bit1/bit3 為單向 latch (a) |
+
+**`$E90014/$E90016` 的兩套解讀尚未定案。** Bcan 當成取樣 DMA 位址暫存器，MAME 當成 FRC
+timer 的 control/frequency 並以此觸發 68k IRQ3。ROM producer 掃描（word-swap 還原後的
+`move.w #imm,$00E90014` 立即值）給出四個具名寫入點：Speedy Dragon `$30D4`←`$A200`、
+`$3476`←`$A0D6`；Formosa Duel `$5EB4`←`$A000`；Journey to the Laugh `$FC6B4`←`$A0D6`。
+MAME 的啟用條件是 `(control & $FF00) == $A200`，故本地八款中只有 Speedy Dragon 那條路徑
+會真的排程 IRQ3。這些值的形狀較接近模式字而非位址，但在同一暫存器上做動態 trace 之前，
+兩套解讀都不升格。
+
+引用 MAME FRC case table 時另注意：`update_frc_state` 的 period 寫成
+`m_frc_control & 0xff << 16`，依 C++ 運算子優先序等於 `control & 0x00ff0000`，對 16-bit
+的 `m_frc_control` 恆為 0，因此其**實際 period 只等於 `frequency`**，不是註解暗示的 24-bit
+組合值。MAME 自己也把整段標為未解出的 HACK。
+
 ## 3. UM6618 視訊暫存器（b，基址 $F00000，offset 為 byte）
 
 | Offset | 功能 |
 |---|---|
-| `$00` | Video IRQ flags（讀）；寫入控制中斷（vblank = 68k IRQ4？IRQ 來源見 §6） |
+| `$00` | Video IRQ flags／status（讀：bit15=目前在 vblank 區間、bit1=奇數幀；讀取即解除 vblank IRQ7）。IRQ level 對照見 §6 |
 | `$02` | 目前掃描線（讀） |
+| `$0A` | Raster「line on」觸發：bit15 啟用＋低 8 bit 目標線號，到線時拉起 68k **IRQ5** |
+| `$0C` | Raster「line off」觸發：同格式，到線時解除 IRQ5 |
 | `$08` | video flags：bit11 interlace、bit10 global double-height、bit9 overscan（224/240）、bit8 h256/h320；bit7–4 normal layer 1–4、bit3 sprite、bit2 ROZ、bit1/0 window clip 1/2 enable |
 | `$10–$1E` | Sprite DMA：count、dest MSW/LSW、src inc、src MSW/LSW、control |
 | `$20/$22/$24/$26` | sprite base addr（<<2）、sprite count（+1）、mono color、flags（bit0：8bpp/4bpp） |
@@ -71,7 +101,7 @@
 | `$160–$17E` | Tilemap 3／第四 normal layer（MAME 作者逐遊戲筆記已觀察；目前 driver／本地 oracle 尚未接入） |
 | `$180–$19E` | ROZ 層：tile mode、scrollx/scrolly（32-bit）、係數 A/B/C/D、base addr、tile bank、3 個逐行參數表位址 |
 | `$1D0–$1DE` | Window 0/1：control、start addr、scrollx、scrolly |
-| `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；F003 實際在 `$0001/$0009` 間切換 bit3；FRC control/frequency 是 `$E90014/$E90016`，不在 UM6618 window |
+| `$1F0` | pixel mode（bit4-3）＋GFX mode（bit2-0）；F003 實際在 `$0001/$0009` 間切換 bit3；`$E90014/$E90016` 不在 UM6618 window，其 FRC／DMA 位址兩套解讀見 §2.1 |
 
 Tilemap flags：bit15-13 優先度、bit11-8 尺寸（16×16/32×32/64×32/128×32/64×64
 tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
@@ -94,6 +124,7 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
 ## 5. 65C02（音效 CPU）側（b）
 
 - 完整 64 KB 位址空間對映到共享 sound RAM；68k 端經 `$E80000` 存取同一 RAM。
+  實體裝片只有 32 KiB，落差與 alias 推論見 §5.1。
 - I/O 暫存器在 **`$0400–$04FF`**：
 
 | 位址 | 功能 |
@@ -130,13 +161,36 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
   = 3.579545 MHz/80 = 44744.3125 Hz（(b) MAME `umc6619_sound.cpp` 模型，
   已獲 (a) 實作驗證）。
 
-## 6. 中斷（b）
+### 5.1 位址空間 64 KiB 與實體裝片 32 KiB 的落差（未定案）
 
-- 68k：**IRQ1**=expansion、**IRQ2**=cartridge、**IRQ3**=UM6619 host/FRC timer、
-  **IRQ4**=UM6618 horizontal retrace、**IRQ5**=UM6618 fixed-line trigger、
-  **IRQ6**=sound CPU→main mailbox、**IRQ7**=UM6618 vertical retrace。
-  IRQ3–7 有多款 ROM handler／mask 使用觀察；IRQ1/2 尚無本地 consumer。來源為 MAME 作者
-  `pergame.md`，仍標 (b) research observation，而非 confirmed-hardware。
+65C02 的位址空間、68k 的 `$E80000–$E8FFFF` 視窗、MAME `sound_map`（`0x0000–0xffff` 一整塊
+share）與 Bcan、superacan-emu 的配置都是 **64 KiB**。板級證據只有 **32 KiB**：`APU.sch` 的
+U11 是單顆 `UM62256`（32K×8），逐 net 檢查只有 `SNDRAM_A0..A14`，整份 schematic 沒有
+`SNDRAM_A15`（(p)，`superacan-notes` 固定 commit `63731a2`）。兩者要同時成立，只能是 65C02
+的 A15 沒有接到 SRAM，上半 32 KiB 是下半的 alias。
+
+軟體證據與該推論相容，並指出一個具體後果：八款本地 ROM 的 word-swap 還原映像都出現
+32-bit 值 `$00E88400`（byte-pattern 掃描，未逐一反組譯確認全部是 operand），而 Boom Zoo
+把歌曲位址表複製到 65C02 `$8400` 已由反組譯確認（sound-driver.md §4.1）。若 alias 成立，
+`$8400` 實際落在實體 `$0400`——正好是被 I/O 頁蓋住、無法由 `$0400` 觸及的那 256 bytes，
+因此 `$8400` 會是使用該塊 RAM 的唯一視圖，而 I/O 解碼必須看 A15。
+
+尚未證實的是：I/O 是否真的以 A15 參與解碼；是否有遊戲把 `$xxxx` 與 `$8000+xxxx` 當成兩塊
+不同記憶體同時使用（若有，就推翻 alias 模型，或指出板上另有未記錄的記憶體）。三個現有
+實作都配置 64 KiB，所以 alias 與否在已驗證路徑上沒有可觀察差異；要定案需實機量測或更多
+ROM consumer。
+
+## 6. 中斷（(b) MAME driver＋(a) 實作驗證）
+
+- 68k：**IRQ1**=expansion、**IRQ2**=cartridge、**IRQ3**=FRC timer（`$E90014/16`，見 §2.1）、
+  **IRQ4**=UM6618 可視線（vpos<240，需 `$E90010` bit4）、**IRQ5**=UM6618 line-on／line-off
+  觸發（`$F0000A`／`$F0000C`）、**IRQ6**=sound CPU→main mailbox（65C02 寫 `$040A`）、
+  **IRQ7**=vertical retrace（vpos 240，需 `$E90010` bit7）。IRQ1／IRQ2 尚無本地 consumer。
+  level 名稱出自 MAME 作者 `pergame.md` 的 research observation，但 IRQ4／5／7 的致能條件與
+  觸發點可直接對到 driver 程式碼，並已由 superacan-emu 實跑（IRQ7 真實受理）。
+- vblank 那一刻（`$E90010` bit7 成立時）除了 68k IRQ7，MAME 同時對 65C02 送一次 **NMI**，
+  註記「staiwbbl requires this for inputs to work」。這就是遊戲 65C02 驅動裡讀 `$0412`
+  作 ack 的那條 NMI（sound-driver.md §2、§2.2）。
 - 65C02：單一 IRQ 線，6 來源 bitmap 在 `$0411`（見 §5）。
 
 ## 7. 手把硬體位元序（b，16-bit active low）
@@ -144,8 +198,12 @@ tile）、bit5 wrap、bit4-2 mosaic、bit1/0 全層 X/Y flip。
 bit15=A、bit14=B、bit13=Start、bit12=Select、bit11=Up、bit10=Down、
 bit9=Left、bit8=Right、bit7=X、bit6=Y、bit5=L、bit4=R、bit3-0 未用。
 
-- 即官方手把為方向 + Start/Select + **A/B/X/Y/L/R**（SFC 式配置）。
-  Bcan 介面的 C/Z 鍵對應 L/R 肩鍵的可能性 **待查證**。
+- 官方手把為方向 + Start/Select + **A/B/X/Y/L/R**（SFC 式配置）。
+- 獨立佐證：`superacan-notes` 作者以自製轉接板實測 SNES 手把可直接使用，序列協定相同、
+  只有按鍵命名不同（A↔SNES B、B↔SNES Y、Start↔SNES Select、Select↔SNES Start、
+  X↔SNES A、Y↔SNES X、L／R 同名）。該對照與上面的位元序完全吻合。
+- Bcan 介面以 A/B/C/X/Y/Z 命名六鍵，其 C/Z 對應硬體 L/R 為**強推論**（鍵數與順序相符），
+  不是實機絲印證據。
 
 ## 8. UMC6650（a+b）
 
@@ -159,7 +217,9 @@ bit9=Left、bit8=Right、bit7=X、bit6=Y、bit5=L、bit4=R、bit3-0 未用。
   `$EB0D03`（寫）= 內部位址埠、`$EB0D01`（讀寫）= 資料埠；內部
   `$20–$2F` 為 16 byte 金鑰（`umc6650.bin`）、`$40–$5F` 為 RAM、`$09/$0C`
   為輸出給卡帶的 lockout 結果。
-- **差異 (b vs a) 已定案（2026-08-30，Bcan SystemBus 反編譯）**：Bcan 實作為
-  `$EB0D03` 寫入位址埠（7-bit）、`$EB0D01` 讀寫資料埠，金鑰區 $20–$2F
-  唯讀（讀取自 umc6650.bin）、RAM 區 $40–$5F 可讀寫——與 IPL 實際用法一致，
-  **確認 MAME `umc6650.cpp` 的埠角色寫反**（MAME 能開機的原因仍待查）。
+- **Bcan 實作 (a)（2026-08-30，SystemBus 反編譯）**：`$EB0D03` 寫入位址埠
+  （7-bit）、`$EB0D01` 讀寫資料埠，金鑰區 `$20–$2F` 唯讀（讀取自
+  `umc6650.bin`）、RAM 區 `$40–$5F` 可讀寫。MAME device 以 `umask16(0x00ff)`
+  掛 `$EB0D00–$EB0D03`，其 device offset = 位址>>1，offset 1 即 `$EB0D03`
+  （位址埠）、offset 0 即 `$EB0D01`（資料埠），與 IPL／Bcan 相同；三者無分歧。
+  同一個 byte-lane 慣例也出現在卡帶 SRAM（Bcan 的 `index = addr>>1`）。

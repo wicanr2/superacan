@@ -22,7 +22,7 @@
 | MC68HC000P10 | 24-bit address、16-bit data、`AS/UDS/LDS/RW`、`IPL0..2`、bus arbitration、reset／halt 接到系統 ASIC／插槽 | CPU datasheet、Bcan clock、ROM exception／IRQ consumer | CPU core 與外部 bus cycle 可完整實作 |
 | U1/U2 Work RAM | 2×32K×8＝64 KiB；U1 接 D0–7、U2 接 D8–15；`WRAM_LCS/HCS` 由 UM6619 產生 | bus decode/readback trace 確認 mirror 與 wait state | 容量、lane 與邏輯映射已足夠 |
 | U5/U6 VRAM | 2×128K×8＝256 KiB；UM6618 獨占 `A0..A16`、D0–15、OE／WE，兩顆 CE 固定有效 | ROM／renderer／DMA trace 找 `VRAM_A17` consumer | 實體拓撲完整，內部位址來源部分未知 |
-| U11 sound RAM | 32K×8；`A0..A14`、D0–7、WE、CE/OE 全由 UM6619 直接控制 | 65C02 memory cycle、68k window 與 DMA arbitration trace | 容量與 ownership 完整，仲裁時序部分已由 Bcan／遊戲確認 |
+| U11 sound RAM | 32K×8；`A0..A14`、D0–7、WE、CE/OE 全由 UM6619 直接控制（全圖無 `SNDRAM_A15`） | 65C02 memory cycle、68k window 與 DMA arbitration trace；上半 32 KiB 是否為 alias | 容量與 ownership 完整；與 64 KiB 位址空間的落差見 [memory-map.md](memory-map.md) §5.1 |
 | UM6618 | 直接接 CPU bus、完整 VRAM bus、UM70C171 palette DAC、master clock、UM6619／卡帶／手把訊號 | 十二款 ROM register producer、renderer trace、實機 video／IRQ capture | 外部介面可固定；tile／sprite／ROZ／IRQ 內部規則需逐功能驗證 |
 | UM6619 | 直接接 CPU bus、控制 68k reset/halt/arbitration/IRQ、Work RAM selects、sound RAM、手把、stereo analog 與 UM6618／卡帶訊號 | 65C02 driver、MAME sound core、Bcan trace、analog capture | 可確認它兼具 system controller／APU／I/O；PCM register 與 IRQ 多數可實作 |
 | UM6650 | 卡帶 bus 與 lockout 相關 pins、16-byte key dump | 68k IPL producer／consumer、Bcan ports、實機量測 `$09/$0C` 外部 pins | 開機授權行為足夠；完整電氣協定仍不完整 |
@@ -43,7 +43,8 @@ SystemBus arbitration、Work RAM byte lane、65C02／sound RAM ownership 放在 
 ### 3.2 SRAM 組織可直接排除容量傳聞
 
 - Work RAM：兩顆 `UM62256` 各 32K×8，合成 32K×16＝64 KiB；不是 256 KiB。
-- Sound RAM：一顆 `UM62256`，32K×8＝32 KiB。
+- Sound RAM：一顆 `UM62256`，32K×8＝32 KiB；只有 `A0..A14` 進入該晶片，65C02 的 64 KiB
+  位址空間因此上下半疑為 alias（[memory-map.md](memory-map.md) §5.1）。
 - 16000-2A VRAM：兩顆 `UM611024`，128K×16＝256 KiB；詳見
   [vram-architecture.md](vram-architecture.md)。
 

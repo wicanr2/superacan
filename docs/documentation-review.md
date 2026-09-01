@@ -1,6 +1,6 @@
 # 文件完整度複查與可補來源
 
-更新日期：2026-09-01。此表以「能否支持軟體模擬」為準，不以頁數或未命名 register 數量評分。
+更新日期：2026-09-01（第二輪複查）。此表以「能否支持軟體模擬」為準，不以頁數或未命名 register 數量評分。
 
 | 文件領域 | 現況 | 本輪找到的補強來源 | 下一個有效動作 |
 |---|---|---|---|
@@ -14,7 +14,7 @@
 | 類比輸出 | 元件與近似邊界已知 | UM70C171、KA2195D datasheet | 要精確只能量測 UM70C188／實機 composite capture |
 | 歷史／發售資料 | 基本年份與發行商可由 catalog 固定 | MAME software list | 當年新聞／廣告仍需有授權的掃描與館藏 provenance |
 
-## 本輪重要訂正
+## 2026-08-31 輪次的重要訂正
 
 1. 已知正式發售軟體是 F001–F012，固定 MAME snapshot 表示十二款皆已 dump。
 2. 本地 `Super Dragon Force` ZIP 內容實為 F007 `Super Light Saga - Dragon Force／超級光明戰史`。
@@ -24,6 +24,37 @@
    fixed-line trigger、sound-to-main、vertical retrace，但仍屬研究觀察，不是晶片資料表。
 6. F003 的兩段 `$F001F0` producer 並非兩次獨立 copy：兩者同屬 `$73B44–$74BEB`
    壓縮區解至 `$FFFFB800–$FFFFDC55` 的單次連續輸出；格式細節與 bit 3 畫面因果仍未定案。
+
+## 2026-09-01 第二輪複查的訂正
+
+1. **`umc6650` 埠角色沒有分歧。** 先前六處文件寫「MAME `umc6650.cpp` 埠角色寫反、
+   MAME 為何仍能開機待查」。MAME 以 `umask16(0x00ff)` 掛在 `$EB0D00–$EB0D03`，
+   device offset = bus 位址>>1，因此 offset 1 就是 `$EB0D03`（位址埠）、offset 0 是
+   `$EB0D01`（資料埠），與 IPL／Bcan 一致；原斷言把 bus 位址當成 device offset。
+   相關敘述已從 memory-map、bios-68k、chip-emulation-guide、
+   hardware-implementation-sources、emulation-readiness-assessment、emulator-analysis
+   與 AGENTS 移除。
+2. **Formosa Duel 的卡帶入口是 `$00002416`**（原記 `$00000426`）；SSP `$00FCFEFC` 正確。
+   其餘七款與 F007 part 0 的向量已逐一重算相符。
+3. **sound RAM 的容量落差首次明確記錄**（memory-map.md §5.1）：`APU.sch` 只有
+   `SNDRAM_A0..A14`（32 KiB），而位址空間、68k 視窗與三個模擬器實作都是 64 KiB。
+4. **`$E90000–$E9001F` 逐暫存器並列**（memory-map.md §2.1）：`$E90010` = IRQ mask
+   （bit7 vblank IRQ7、bit4 可視線 IRQ4）；`$E90014/16` 的 FRC 與 DMA 位址兩套解讀
+   並列，附四個 ROM 具名寫入點；`$E90018` 的 RNG 與取樣播放位置兩套解讀並列。
+5. **UM6618 `$0A`／`$0C`** 補為 raster line-on／line-off 觸發（→ 68k IRQ5）；
+   `$00` 的讀取語意（bit15 vblank 區間、bit1 奇數幀、讀取解除 IRQ7）取代原本
+   「vblank = IRQ4？」的疑問。
+6. **65C02 NMI 來源定案為主機 vblank**（`$E90010` bit7 成立時與 68k IRQ7 同時發出），
+   sound-driver.md §2／§2.2 的「待查證」撤除。
+7. `bios-65c02.md` 殘留的「byte 對調寫入 65C02 端」與 `emulator-analysis.md` §4.6 把
+   `$E90004/05`、`$E9000C` 稱為手把埠，兩處已對齊既有定案。
+8. 手把按鍵對應取得獨立佐證：`superacan-notes` 作者以自製轉接板實測 SNES 手把協定相同、
+   只有命名不同，與 memory-map.md §7 的位元序吻合。
+9. 引用 MAME FRC case table 時要注意其 period 因運算子優先序實際只等於 `frequency`。
+
+外部來源複查：`supracan.cpp`、`umc6650.cpp`、`umc6619_sound.cpp` 的固定 commit `6ae579a`
+與 2026-09-01 的 master 逐 byte 相同；`superacan-notes` 仍為 `63731a2`、`angelosa/hw_docs`
+仍為 `1b9e8fe`。固定引用有效，不需重查；可補的內容都在已固定的原始碼裡。
 
 ## 網路資料已接近停止線的項目
 

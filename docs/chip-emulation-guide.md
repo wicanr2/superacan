@@ -83,8 +83,8 @@ CLK 的 Reset 是 level-sensitive，且 CPU 有真正取得 cycle 才會捕捉�
 UMC6650 可用很小的狀態機表示：256-byte 內部空間、7-bit address latch，以及外部提供的
 16-byte key。
 
-1. `$EB0D03` 寫入選擇 address，`$EB0D01` 讀寫 data；此角色已由 IPL/Bcan (a) 證實，與
-   MAME 現有 device 的 offset 解讀相反。
+1. `$EB0D03` 寫入選擇 address，`$EB0D01` 讀寫 data；IPL (a)、Bcan (a) 與 MAME device (b)
+   三者一致（MAME 的 device offset = bus 位址>>1，故其 offset 1 即 `$EB0D03`）。
 2. key 放在內部 `$20–$2F` 並設唯讀；`$40–$5F` 是 32-byte RAM。
 3. 其他已觀察位址先保存 readback，讓 IPL 的 `$09/$0C` 交握成立；其外部 pin 電氣語意仍未知。
 4. 驗證 gate 是 IPL 完成交握、比對卡帶 `$2000` 授權資料並跳到卡帶向量，不是只測 register

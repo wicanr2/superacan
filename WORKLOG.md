@@ -1,5 +1,30 @@
 # 工作歷程
 
+## 2026-09-01：知識庫正確性稽核與外部來源複查
+
+- 目標：逐項複驗 `docs/` 的斷言與證據等級，找出互相矛盾與過期結論，並用外部原始碼／
+  schematic 補足缺口。
+- 本機重驗（Docker、唯讀掛載）：四個 BIOS 成員與兩個 ZIP 容器的 CRC32／SHA-1／SHA-256、
+  九款本地 ROM 的雜湊與向量表、`$F001F0` 立即寫入點、`$E8xxxx` 與 `$E900xx` 的 ROM 引用
+  分布，全部重算。
+- 訂正：Formosa Duel 入口 PC 由 `$00000426` 改為實測的 `$00002416`；撤除六處
+  「MAME `umc6650.cpp` 埠角色寫反」的斷言（該斷言把 bus 位址當成 device offset，
+  MAME 的 offset = 位址>>1，三方其實一致）；對齊 `bios-65c02.md` 的 sound RAM 位元組序
+  與 `emulator-analysis.md` §4.6 的 `$E90004/05`／`$E9000C` 角色。
+- 新增：`memory-map.md` §2.1（UM6619 主機端埠逐暫存器，MAME 與 Bcan 兩套解讀並列，
+  含 `$E90010` IRQ mask、`$E90014/16` FRC 與 DMA 位址之爭、`$E90018` 的兩種讀值語意）、
+  §5.1（sound RAM 實體 32 KiB 與 64 KiB 位址空間的落差與 alias 推論）；UM6618 `$0A`／`$0C`
+  raster 觸發列；65C02 NMI 來源；手把對應的 SNES 轉接佐證；`internal_68k.bin` 可能位於
+  UM6619 的線索；F003 A/B 實驗前需先固定 visible area 的提醒。
+- 外部來源：以 Docker 內建網路抓取 MAME master 與固定 commit `6ae579a` 的
+  `supracan.cpp`／`umc6650.cpp`／`umc6619_sound.cpp` 逐 byte 比對，兩者相同；
+  `superacan-notes` 仍為 `63731a2`、`angelosa/hw_docs` 仍為 `1b9e8fe`；Bcan 公開版本
+  仍是 0.0.8b。逐 net 解析 `APU.sch` 確認 sound RAM 只接 `A0..A14`。
+- 文風：撤掉 `sound-driver.md` §0、`emulator-analysis.md` §5、`sound-driver.md` §3／§4.3 的
+  修正過程自述；`AGENTS.md` §6 的 superacan-emu 里程碑流水帳改為「已回饋的硬體結論」清單。
+- 未完成：sound RAM 上半區是否真為 alias、`$E90014/16` 兩套解讀的定案、F003 pixel-mode
+  bit 3 的同狀態 A/B，都需要動態 trace 或實機量測。
+
 ## 2026-08-31：專案入口、硬體圖與實機照片
 
 - 目標：review 現有知識庫，建立穩定 README，補充硬體 SVG 與可合法納入的實機照片。

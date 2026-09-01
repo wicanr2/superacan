@@ -36,8 +36,8 @@ A'Can jingle，資料來源落在 sound RAM `$2E00–$2EFF`。因此至少這一
 65C02 的程式**全部由卡帶（68k 端）提供**：
 
 1. 68k 把 65C02 代碼經 `$E80000` 視窗寫入共享 sound RAM（68k 端 16-bit
-   存取、byte 對調寫入 65C02 端，見 memory-map.md §2）；含在 `$FFFA–
-   $FFFF` 放置 NMI/RESET/IRQ 向量。
+   存取，位元組序不變：`$E80000+n` 即 65C02 `$n`，見 memory-map.md §2 與
+   sound-driver.md §0）；含在 `$FFFA–$FFFF` 放置 NMI/RESET/IRQ 向量。
 2. 68k 寫 `$E9001C` bit0 = 1 解除 65C02 的 HALT/reset。
 3. 65C02 從 sound RAM 內的 reset 向量起跑，整個 64 KB 空間對映同一塊
    sound RAM（I/O 在 `$0400–$04FF` 攔截）。

@@ -29,7 +29,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 | 視訊 | UMC UM6618，tilemap、sprite、window、DMA；部分 ROZ／混色仍待補證 | (a)+(b) |
 | 音效／周邊 | UMC UM6619，16 通道 PCM／取樣式合成；未見 FM 證據 | (a)+(b) |
 | 主記憶體 | 64 KiB Work RAM，`$FC0000–$FCFFFF` | (a) |
-| 音效記憶體 | 32 KiB；65C02 I/O 位於 `$0400–$04FF` | (a)+(b) |
+| 音效記憶體 | 實體 32 KiB；65C02 位址空間與 68k 視窗為 64 KiB（上半疑為 alias，未定案）；I/O 位於 `$0400–$04FF` | (p)+(a)+(b) |
 | 視訊記憶體 | 68k 可見視窗 128 KiB；`16000-2A` 板物理 256 KiB，UM6618 可驅動完整 17-bit word address；上半部 consumer 未定 | (a)+(p) |
 | 卡帶 | raw binary、16-bit word-swap 向量表、無 mapper；支援雙部分卡帶 | (a) |
 

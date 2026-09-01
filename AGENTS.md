@@ -43,7 +43,7 @@
 | 主 CPU | Motorola **MC68HC000P10** @ **10.738635 MHz**（型號為 (p) 板級證據；時脈為 (a) Bcan 反編譯定案；MAME 用 U13/6≈8.95 MHz 為未定案猜測） | 68000 相容、低功耗 CMOS 型號 |
 | 副 CPU | WDC **65C02** @ **3.579545 MHz**（(a) 定案；早期資料誤記 MOS 6502） | 見 §4、docs/sound-driver.md |
 | 主記憶體 | 64 KiB Work RAM | 2×32K×8 板級證據 (p)＋Bcan `$FC0000–$FCFFFF` (a)；舊網頁 256 KiB 說法不採用 |
-| 副記憶體 | 32 KB | |
+| 副記憶體 | 實體 32 KB（單顆 `UM62256`, (p)）；65C02 位址空間與 68k `$E80000` 視窗皆 64 KB，上半疑為 alias、**待查證** | 見 docs/memory-map.md §5.1 |
 | VRAM | 68k 可見視窗 128 KiB；`PCGAM 16000-2A` 板為 2×`UM611024`，物理合計 256 KiB；UM6618 `VRAM_A17` 接 SRAM `A16`，上半部 consumer 待查證 | 較早板級筆記為 2×`UM61512`、合計 128 KiB，可能有 revision 差異；見 docs/vram-architecture.md |
 | DMA | 主機 DMA **2 通道**（(b) MAME 實作；外界流傳 8 組之說待查證） | 另有 UM6618 內部 sprite DMA |
 | 繪圖晶片 | UMC **UM6618**（背景與動畫處理器） | 四層背景、精靈透明/縮放 |
@@ -121,7 +121,7 @@
 - **BIOS**：`bios/supracan.zip` + `umc6650.zip` 必備，逐成員驗證檔名/大小/CRC；68k IPL 載入時做 reset-vector 正規化（word-swap）；冷開機有步數上限，BIOS 須在限期內跳到卡帶入口。IPL 反組譯（[docs/bios-68k.md](docs/bios-68k.md)）：UMC6650 交握（`$EB0D03`=位址埠、`$EB0D01`=資料埠）→ 卡帶 `$2000` 授權比對 → 設 `$E9001C` bit1/bit3 關 overlay → 跳卡帶向量入口；兩塊 6502 bin 為取樣資料（[docs/bios-65c02.md](docs/bios-65c02.md)）
 - **ROM**：只收 `.bin` raw image 與 bounded `.zip`；支援雙部分卡帶（數字 `.0`/`.1`，如 Super Light Saga = 2 MiB + 1 MiB）；ROM 以 SHA-256 作為 game identifier
 - **時脈模型**：master tick 107.38635 MHz（2×U13）；68k ×10、65C02 ×30（emulator-analysis.md §4.1）
-- **匯流排**：SystemBus 讀寫分派全區段已反編譯確認（含 SRAM 僅奇位址、no-op 區段、Work RAM addr&0xFFFF 映射、越界 ROM 讀回 0xFFFF）；UMC6650 金鑰區 `$20–$2F` 唯讀，確認 MAME `umc6650.cpp` 埠角色寫反
+- **匯流排**：SystemBus 讀寫分派全區段已反編譯確認（含 SRAM 僅奇位址、no-op 區段、Work RAM addr&0xFFFF 映射、越界 ROM 讀回 0xFFFF）；UMC6650 金鑰區 `$20–$2F` 唯讀，埠角色與 IPL／MAME device 一致
 - **Work RAM**：`$FC0000–$FCFFFF`（64 KiB）——cheat 搜尋範圍字串直接證實
 - **Save state**：magic `ACANRTS`、槽位 0–9、96-byte 標頭＋payload、指令邊界擷取、背景寫入、transactional restore（失敗 rollback）
 - **Cheat**：內建 RAM 搜尋/金手指管理器；`.cht` 為 tab 分隔純文字（標頭 `BCAN_CHT_1`、上限 1024 筆、相容舊 magic `ACAN_CHT_1`），cheat 寫入直改 Work RAM 副本不走 bus
@@ -159,18 +159,15 @@
 | `superacan` | 硬體/軟體規格、逆向分析文件（`docs/`）＋ ROM/BIOS 分析與萃取工具（`tools/`） | 本機 Git repo；尚未建立 GitHub repo |
 
 - 目前只建立一個 repo（docs + tools 合併，即本目錄）。遊戲 remake 專案**暫不建立**，等確定要重製哪款遊戲後再開新 repo（命名屆時依遊戲決定，例如 `superacan-remake-<game>`）。
-- **Linux 模擬器重製**：repo 已建立於本機 `../superacan-emu/`（尚未上 GitHub；建議名 `superacan-emu`），目標是在 Linux 上重製 Bcan 的模擬能力。Bcan 為閉源 Windows 程式、GitHub 上無移植（§5.1）；實作基礎為本知識庫（(a) 級記憶體映射/時脈/音訊協定）＋ MAME driver（BSD-3-Clause，可直接取用）＋ Moira（68k）/CLK（65C02）核心（皆 MIT）。
-  - **里程碑 1 完成（2026-08-31）**：SystemBus 全表＋UMC6650＋Moira 68k，IPL 跑通 lockout/授權檢查並跳入卡帶入口（Boom Zoo `$412`、Monopoly `$24C6`，與知識庫交叉驗證一致；驗證 log 見 superacan-emu/docs/verify-ipl.md）。後續：UM6618 繪圖、65C02/UM6619 音效、SDL2 視窗。
-  - **里程碑 2 完成（2026-08-31）**：UM6618（3 tilemap＋sprite＋window 0＋sprite DMA；ROZ stub）、主機 DMA 2 通道、vblank/raster/line IRQ（IRQ7/4/5，HOLD_LINE 語意）、65C02 實跑（命令 mailbox/boot ack/重新上傳）、SDL2 視窗。Boom Zoo、Monopoly、Speedy Dragon 畫面驗證通過（截圖與細節見 superacan-emu/docs/verify-video.md）。**新發現**：
-    - `$E9001C` bit1/bit3 的 IPL overlay 關閉是**單向 latch**（遊戲上傳音效驅動時會把整個暫存器清 0；若 overlay 隨之恢復，卡帶中斷向量會被 IPL 的 `rte` 表蓋回，主迴圈停擺）——修正 §4.6「BIOS」節語意。
-    - 68k IRQ 需 HOLD_LINE 語意（CPU ack 後解除），否則用 `STOP #$2700` 等 vblank 的遊戲會鎖死在中斷再進入循環。
-    - Speedy Dragon 第二音效驅動的 DMA control 實測為 `$B800`（word 模式），sound-driver.md §1.2 的 `$2648` 應修正；第二驅動後續命令協定仍待查證（IRQ enable 切成 `$0C` 後 68k 端停在 `$28DE` 等待）。
-  - 實測佐證：IPL 轉交點 `JMP $F80604`（高區視圖）在模擬器實跑中確認，與 docs/bios-68k.md §2 一致。
-  - **里程碑 3+4 完成（2026-08-31）**：UM6619 PCM 音效合成（16 通道、period/音量/key/DMA 雙緩衝/timer IRQ，原生 44744 Hz→48 kHz 線性插值；演算法依 MAME `umc6619_sound.cpp` BSD-3-Clause 重新實作）、SDL2 音訊輸出＋headless `--wav` 錄音、手把輸入（SDL 鍵盤＋headless `--press` 注入；shift register 與 direct mode 兩路皆通）。Boom Zoo/Monopoly 音樂＋按鍵反應（標題按 Start 進入選擇畫面）驗證通過（數據見 superacan-emu/docs/verify-audio-input.md）。**Speedy Dragon 第二音樂驅動已修復**（里程碑 2 的已知缺陷），根因三層：
-    - CLK 6502Mk2 的 Reset 是 level-triggered 且只在給 cycle 時捕捉——HALT 期間不給 cycle 會讓 reset「設了又清」整個消失；手動補跑固定 7-cycle 又會截斷序列。正確做法：釋放後**繼續拉住 Reset 線**直到 CPU 進入 reset 序列（讀 `$FFFC` 向量）再放開。
-    - **65C02 IRQ 來源是 level-held、各有專屬 ack**（bit2←讀 `$0405`、bit3←讀 `$0404`、bit5←讀 `$040A`、bit6←讀 UM6619 reg `$16`、bit7←讀 reg `$14`），`$0411` 是純狀態暫存器——MAME 的「讀取即清全部」會丟同時發生的來源（(a) 級修正，memory-map.md §5 已更新）。
-    - latch `$0404/$0405` 空讀回 `$CD`，68k 經 `$E80404/05` 窗口寫入觸發 IRQ；開機 probe 靠 `$0407` 清除脈衝觸發 latch IRQ 讀到 `$CD` 快速結束（觸發條件為功能推測）。
-    - 第二驅動結構反組譯完成（sound-driver.md §2.2）；實際上傳常式為 68k `$34E4`（control `$B800`），靜態碼 `$954`（`$2648`）無呼叫者。
+- **Linux 模擬器重製**：repo 已建立於本機 `../superacan-emu/`（尚未上 GitHub；建議名 `superacan-emu`），目標是在 Linux 上重製 Bcan 的模擬能力。Bcan 為閉源 Windows 程式、GitHub 上無移植（§5.1）；實作基礎為本知識庫（(a) 級記憶體映射/時脈/音訊協定）＋ MAME driver（BSD-3-Clause，可閱讀與重新實作）；CPU 核心已改為獨立實作，Moira／CLK 只作差分 oracle。
+  - 該 repo 的里程碑進度、驗證數據與截圖由它自己的 `WORKLOG.md` 與 `docs/verify-*.md` 保存，本庫不轉錄；以下只列已回饋到本庫並寫入對應文件的硬體結論。
+  - `$E9001C` bit1/bit3 的 IPL overlay 關閉是**單向 latch**：遊戲之後把整個暫存器清 0 不得恢復 overlay，否則卡帶中斷向量會被 IPL 的 `rte` 表蓋回（docs/bios-68k.md、docs/chip-emulation-guide.md §2）。
+  - 68k IRQ 採 **HOLD_LINE** 語意，CPU 受理該 level 後才解除來源；否則用 `STOP #$2700` 等 vblank 的遊戲會鎖死（docs/memory-map.md §6）。
+  - 65C02 六個 IRQ 來源為 **level-held 且各有專屬 ack**，`$0411` 只是狀態暫存器（docs/memory-map.md §5、docs/sound-driver.md §3）。
+  - 65C02 釋放 HALT 後必須維持 Reset 線直到 CPU 讀 `$FFFC`，否則 reset 序列被截斷（docs/chip-emulation-guide.md §3.1）。
+  - latch `$0404/$0405` 空讀回 `$CD`，68k 經 `$E80404/05` 窗口寫入觸發對應 IRQ（docs/sound-driver.md §3、§4.3）。
+  - Speedy Dragon 第二音樂驅動的實際上傳常式是 68k `$34E4`、DMA control `$B800`；靜態碼 `$954`（`$2648`）無呼叫者（docs/sound-driver.md §1.2、§2.2）。
+  - IPL 轉交點 `JMP $F80604`（高區視圖）已由實跑確認，與 docs/bios-68k.md §2 一致。
 - 版權隔離：ROM/BIOS 等受版權保護檔案**不上傳** GitHub，repo 的 `.gitignore` 預設排除 `*.bin`、`Bcan008b/` 整個目錄（含 ROM 與模擬器執行檔）。
 
 ## 7. 工作守則

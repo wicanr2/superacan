@@ -7,7 +7,7 @@
 > 所有 68k 位址為 ROM 映像 offset（= 匯流排位址，卡帶映射於 `$000000` 起）；
 > 65C02 位址為 sound RAM 位址。
 
-## 0. 重要修正：sound RAM 窗口的位元組序 (a)
+## 0. sound RAM 窗口的位元組序 (a)
 
 68k 經 `$E80000` 窗口存取 65C02 sound RAM 時**不做位元組交換**：
 68k `$E80000+n` 即 65C02 `$n`（byte 與 word 存取皆然）。
@@ -20,8 +20,8 @@
    （偶位址 byte 讀取）等待——兩邊位址一致。
 3. Boom Zoo / Speedy Dragon 的命令串以未交換位元組序解析才合理（§4）。
 
-→ memory-map.md §2「byte 對調寫入 65C02 端」的說法應修正（word-swap 只存在
-於 **ROM 檔案格式**層，不存在於此硬體窗口）。
+word-swap 只存在於 **ROM 檔案格式**層，不存在於這個硬體窗口。MAME `_68k_soundram_w`
+也是直接 big-endian 拆寫（`soundram[offset*2] = data >> 8`），與此一致。
 
 ## 1. 上傳機制
 
@@ -83,8 +83,10 @@
   bit6(`$40`)→`$F64A` 取樣 DMA；bit2(`$04`)→`$F4F1` latch `$0405`；
   bit3(`$08`)→`$F53F` latch `$0404`；bit4(`$10`)→`$F58F` 讀 `$0409` ack；
   bit5(`$20`，68k 請求)→`$F595` 命令分派；bit7(`$80`，timer)→`$F620`。
-- **NMI `$F4A8`** → `jmp ($FFEC)` → `$F4AB`：讀 `$0412` ack 後 rti
-  （NMI 來源待查證）。
+- **NMI `$F4A8`** → `jmp ($FFEC)` → `$F4AB`：讀 `$0412` ack 後 rti。
+  NMI 來源是主機端 vblank：MAME 在 vpos 240、`$E90010` bit7 成立時同時拉 68k IRQ7 與
+  65C02 NMI（driver 註「staiwbbl requires this for inputs to work」），見
+  [memory-map.md](memory-map.md) §6。
 - **timer tick `$F620`**：讀 UM6619 reg `$14` 測 bit6（DMA/計時模式），
   寫 `$8F`/`$4F` 回 reg `$14`；音樂逐拍更新在 `$F3E6` 起（通道 duration
   計數 `$02C0/$02D0` 遞減、歸零 key-off、音量漸變寫 reg `$E0|ch`）。
@@ -106,7 +108,8 @@
 > 追蹤。此驅動在 superacan-emu 上已可完整跑通（boot ack、命令分派、音樂播放）。
 
 - **向量**：NMI=`$ED61`（→`jmp ($FD50)`=`$ED64`：手把掃描 `$F90C`，
-  讀 `$0412` ack 後 rti）、RESET=`$E802`、IRQ=`$ED75`。
+  讀 `$0412` ack 後 rti；NMI 來源為主機 vblank，見 §2 與 memory-map.md §6）、
+  RESET=`$E802`、IRQ=`$ED75`。
 - **RESET `$E802`**：sei、設堆疊、`jsr $F093` init，之後 `$E809` 主迴圈前
   等待 `$FE77==0`（由命令 handler `$F397` 依命令碼 & 6 控制：`==4` 時清
   `$FE77` 放行）——即 68k 上傳後還要送一條「模式」命令才真正進主迴圈。
@@ -143,7 +146,7 @@
 | `$040A` | 65C02→68k IRQ 請求（寫任意值觸發 68k IRQ6）；**65C02 讀取 = ack IRQ bit5**（兩套驅動的 bit5 handler 都讀它）；**68k 寫 `$E9000A` 則觸發 65C02 IRQ bit5**（命令通知） |
 | `$040C/$040D` | 取樣 DMA 位址/狀態交給 68k 端（寫後立刻寫 `$040A=$FF` 通知 68k refill，見 §4.4） |
 | `$0410` | IRQ enable（bit0-3 = latch/手把相關、bit4-7 = timer/DMA/68k 請求等） |
-| `$0411` | IRQ 來源旗標。**修正（2026-08-31，superacan-emu 實測 (a)）：純狀態、讀取不清**——各 bit 由專屬 ack 拉住直到清除：bit2←讀 `$0405`、bit3←讀 `$0404`、bit4←讀 `$0409`、bit5←讀 `$040A`、bit6←讀 UM6619 reg `$16`、bit7←讀 reg `$14`。證據：兩套驅動的 dispatcher 都只用一次 `$0411` 讀值分派**一個**來源就 rti，依賴 level 重觸發補跑其餘來源；「讀取即清全部」（MAME 行為）會丟同時發生的來源 |
+| `$0411` | IRQ 來源旗標，**純狀態、讀取不清**（(a)，superacan-emu 實測）——各 bit 由專屬 ack 拉住直到清除：bit2←讀 `$0405`、bit3←讀 `$0404`、bit4←讀 `$0409`、bit5←讀 `$040A`、bit6←讀 UM6619 reg `$16`、bit7←讀 reg `$14`。證據：兩套驅動的 dispatcher 都只用一次 `$0411` 讀值分派**一個**來源就 rti，依賴 level 重觸發補跑其餘來源；「讀取即清全部」（MAME 行為）會丟同時發生的來源 |
 | `$0412` | NMI ack（讀） |
 | `$0420` | UM6619 位址埠／狀態（**bit0=busy**：讀寫前後都要輪詢 bit0=0；寫 reg 號後插 6 個 NOP 延遲） |
 | `$0422` | UM6619 資料埠 |
@@ -205,9 +208,9 @@ Boom Zoo 68k 端範例（對照驗證一致 (a)）：
   - y=0（`$0404`）或 2（`$0405`），即兩組獨立通道。
 - 形式像兩組 10-bit 帶符號數值 + 2-bit 欄位的即時控制（音高滑音/音量？），
   **確切語意待查證**。68k 端經 `$E80404/$E80405` 窗口寫入（寫入即置位並
-  觸發 IRQ bit3/bit2；65C02 讀取即 ack 並清空，空讀回 `$CD`）——
-  2026-08-31 修正：舊記述「MAME：`$E90004/$E90005`」有誤，MAME 的
-  `$E90004/05` 是 68k 讀取 `$040C/$040D` 的 DMA 位址回報埠。
+  觸發 IRQ bit3/bit2；65C02 讀取即 ack 並清空，空讀回 `$CD`）。
+  另注意 `$E90004/$E90005` 不是這條 latch 的 68k 端：它是 68k 讀取 `$040C/$040D`
+  的取樣 DMA 位址回報埠（memory-map.md §2.1）。
 
 ### 4.4 取樣 DMA 完成 IRQ 與雙緩衝 (a)
 
@@ -235,7 +238,7 @@ Boom Zoo 68k 端範例（對照驗證一致 (a)）：
 | `$11/$12` | **timer period**（(b)）：實際 period = `10 × (0x10000 − ($12$11))` clocks；初始值 `$02F9` → 約 200 Hz（音樂 tempo） |
 | `$13` | 初始化 `=$90`（待查證） |
 | `$14` | timer/IRQ 控制：寫入 bit7 啟動/重載 timer；bit6 致能到期觸發 65C02 IRQ bit7；**讀取 = ack timer IRQ**（(b)，與驅動 tick 行為一致） |
-| `$16` | 取樣 DMA 狀態/控制：讀 bit6=busy、**讀取 = ack DMA IRQ（bit6）**；寫 `$80` 啟動、寫 0 停止 |
+| `$16` | 取樣 DMA 狀態/控制：讀 bit6=busy、**讀取 = ack DMA IRQ（bit6）**；寫 `$80` 啟動、寫 0 停止。MAME 的寫入語意更明確：`m_dma_channels = data << 8`，即以 bitmask 選擇 DMA 驅動通道，只涵蓋 ch8–15（寫 `$80` = ch15），與驅動只用 ch15 播取樣一致 |
 | `$17` | **key on/off**：寫 `ch`（key-off）或 `ch|$10`（key-on），低 4 bit=通道；(b)：高 nibble ≠0 即 key-on。key-on 時 curr=start<<6、end=curr+length |
 | `$20–$2F` | 通道 0–15 period 低 byte（addr_increment 低半） |
 | `$30–$3F` | 通道 period 高 byte（cmd3 取樣位址借用 `$2F/$3F`，即 ch15 的 period——取樣播放實為 ch15 以 DMA 模式播放 (b)） |

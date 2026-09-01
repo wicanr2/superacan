@@ -78,6 +78,11 @@ MAME 只保存 `m_pixel_mode = data & 0x18`，render path 沒有讀取它。下�
 4. 若顯示多 byte-per-pixel，再量測 UM6618→UM70C188 的 P0–P7/PCLK framing；
 5. 定案前使用 `unknown pixel mode bit 3`，不得命名為 TrueColor enable。
 
+同一款遊戲另有一條可用的外部線索：MAME driver 檔頭寫「visible area 幾乎確定是 224，因為
+The Son of Evil 在 vblank handler 有明確檢查」。因此做 bit 3 的 A/B 之前，應先固定 visible
+area 與 `$F00008` video flags（本檔 `$74C8E` 寫 `$1080`），避免把顯示區高度差異誤讀成
+pixel mode 的效果。
+
 ## 6. deprecated oracle 動態 trace（a，software-observed）
 
 在 `superacan-emu` deprecated C++ oracle 的 16-bit UM6618 write path 加入純記錄探針；探針
