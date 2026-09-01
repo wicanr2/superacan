@@ -162,37 +162,51 @@ symbol 編碼及通用終止標記仍未形式化，尚不能宣稱整個 F003 �
 
 ## 7. 可用 oracle 的邊界（2026-09-01）
 
-要判斷 bit 3 是否改變像素格式，必須有一個**會消費該位元**的參考實作。目前兩個候選都沒有。
+要判斷 bit 3 是否改變像素格式，必須有一個**會消費該位元**的參考實作。目前兩個公開實作
+都不消費它。
 
-**MAME（固定 `6ae579a`）**：`m_pixel_mode = data & 0x18` 只在兩處被讀——`video_r` 對 `$1F0`
-的讀回，以及 `if (m_pixel_mode & 0x10)` 的 popmessage。render path 不引用它。相對地
-`m_gfx_mode` 有 `get_tilemap_region()` 的 consumer（`layer0_mode[8] = {2,1,0,1,0,0,0,0}`、
-`layer1_mode[8] = {2,1,1,1,2,2,2,2}`），可見兩者待遇不同。
+**MAME（固定 `6ae579a`）**：`m_pixel_mode = data & 0x18` 只在兩處被讀——`video_r` 對
+`$1F0` 的讀回，以及 `if (m_pixel_mode & 0x10)` 的 popmessage。render path 不引用它。
+相對地 `m_gfx_mode` 有 `get_tilemap_region()` 的 consumer
+（`layer0_mode[8] = {2,1,0,1,0,0,0,0}`、`layer1_mode[8] = {2,1,1,1,2,2,2,2}`）。
 
-**Bcan 0.0.8b**：以 IDA Pro 9.4 對本機 `Bcan.exe.i64` 實測（`idat -A -S`，Hex-Rays）。
-`$F001F0` 的寫入經 `sub_1400A8FA0` → `sub_1400A9200`，在該處拆成
-`*(BYTE *)(video+594) = value & 0x18`（pixel mode）與 `*(BYTE *)(video+595) = value & 7`
-（gfx mode），與 MAME 完全相同。對整個 `.text` 掃描這兩個 byte 欄位的直接結構位移存取，
-consumer 只有三類：
+**Bcan 0.0.8b**：以 IDA Pro 9.4（`ida-pro-9.4-idapython:locked-v1`，Hex-Rays）對本機
+`Bcan.exe.i64` 追出完整資料流。Bcan 的視訊物件同時保存 raw register file（`video+0..0x1FF`）
+與一份解碼鏡像（`video+512` 起），畫面則由**每幀建立的 snapshot 結構**繪製，renderer 只看
+snapshot、不直接讀視訊物件：
 
-| 函式 | 角色 |
+| 位址 | 角色 |
 |---|---|
-| `sub_1400A9200` | 暫存器寫入時的解碼（唯一 producer，另有 `sub_1400AB9A0` 於 state restore 寫回） |
-| `sub_1400A96E0` | 狀態一致性驗證器：把 raw register file（`video+0..0x1FF`）逐欄比對 `video+512` 起的解碼鏡像，其中 `(reg$1F0 & 0x18) == byte@594`、`(reg$1F0 & 7) == byte@595` |
-| `sub_1400AAC80` | 即時存檔序列化（把兩個 byte 交給 `sub_1400AA6B0`） |
+| `sub_1400A8FA0` → `sub_1400A9200` | 暫存器寫入解碼：`*(BYTE *)(video+594) = value & 0x18`（pixel mode）、`*(BYTE *)(video+595) = value & 7`（gfx mode），與 MAME 相同 |
+| `sub_1400A96E0` | 狀態一致性驗證器：逐欄比對 raw register file 與解碼鏡像，其中 `(reg$1F0 & 0x18) == byte@594`、`(reg$1F0 & 7) == byte@595` |
+| `sub_1400AAC80`／`sub_1400AB9A0` | 即時存檔的序列化與還原 |
+| `sub_140082130` | **每幀 snapshot 建構器**：由視訊物件取出 renderer 需要的欄位 |
+| `sub_14009D6E0` | **renderer**：輸入為 snapshot＋輸出緩衝（`a3 == 76800` 即 320×240），先驗證 VRAM `0x20000`、palette 256、window 邊界，再逐層合成 |
 
-286 KB 的 renderer `sub_1400B1160` **沒有**讀取這兩個欄位；它出現的 `0x1F0` 全部是立即值
-（`or reg,1F0h`）與堆疊位移，不是暫存器檔的結構存取。
+決定性的一步在 snapshot 建構器：它以一次 8-byte 讀取取得 `video+588..595`
+（`mov rax, [rdx+29324h]`），其中低 2 byte 是 video flags、byte 6 是 pixel mode、
+byte 7 是 gfx mode。該 qword 的使用方式為：
 
-**因此**：以 Bcan 為 oracle 觀察 F003 的畫面，無法回答 bit 3 的問題。實測 20 張截圖
+```c
+v2 = *(_QWORD *)(a2 + 168740);        // video+588..595
+*(_WORD *)(a1 + 188) = v2;            // snapshot+188 = video flags
+*(_WORD *)(a1 + 190) = HIWORD(v2);    // snapshot+190 = video+590..591
+*(_BYTE *)(a1 + 32)  = (unsigned __int8)v2 >> 7;   // 以下皆為 video flags 的
+*(_BYTE *)(a1 + 52)  = (v2 & 0x40) != 0;           // 圖層致能位元
+*(_BYTE *)(a1 + 72)  = (v2 & 0x20) != 0;
+*(_BYTE *)(a1 + 96)  = (v2 & 8)    != 0;
+*(_BYTE *)(a1 + 112) = (v2 & 4)    != 0;
+*(_BYTE *)(a1 + 160) = (v2 & 2)    != 0;
+```
+
+**byte 6 與 byte 7 完全沒有被用到**——pixel mode 與 gfx mode 都沒有進入 snapshot，因此
+renderer 結構上不可能依賴 `$F001F0`。附帶結論：Bcan 連全域 gfx mode 都不使用，色深與
+tile region 改由各圖層自己的 mode 暫存器決定，這一點與 MAME 的 `get_tilemap_region()` 不同。
+
+**因此**以 Bcan 為 oracle 觀察 F003 的畫面無法回答 bit 3 的問題。實測 20 張截圖
 （`docker/bcan-oracle.sh`，The Son of Evil，每 6 秒一張共 2 分鐘）的相異顏色數為
 1／15／82／15／14／13／14／14／60／58／58／59／58／59／1／15／118／15／14／14，
-全部遠低於 256，看不到超出調色盤的輸出——但這只證明 Bcan 的 renderer 不消費 bit 3，
-不能推論硬體行為。
-
-**方法限制**：上述掃描只涵蓋直接的結構位移存取（`[reg+252h]`／`[reg+253h]` 這種形式）。
-`gfx_mode` 同樣沒有在 renderer 出現，合理推測 Bcan 把色深／region 選擇放在 VRAM／tile
-decode 階段，但本輪沒有追指標間接路徑，不能宣稱「Bcan 完全不使用 gfx mode」。
+全部遠低於 256——這與「Bcan 不消費 bit 3」一致，不能推論硬體行為。
 
 **下一步只剩硬體**：在實機上以同一 ROM 狀態切換 bit 3 並擷取 UM6618→UM70C188 的
 `P0–P7`／`PCLK`，或量測 composite 輸出。在那之前，`$F001F0` bit 3 維持

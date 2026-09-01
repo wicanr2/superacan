@@ -59,10 +59,14 @@
 11. **sound RAM 32 KiB alias 假說做過一次 A/B**（memory-map.md §5.1）：四款 ROM 各 1200 幀，
     除 Boom Zoo 約 0.01% 音訊樣本外全部相同；唯一對撞點是 Boom Zoo 的 `$040A/$040B`。
 
-12. **F003 pixel-mode bit 3 的 oracle 邊界已釐清**（f003-video-mode.md §7）：MAME 與 Bcan
-    都只把 `$F001F0` 解碼成 pixel/gfx mode 欄位供讀回、存檔與一致性檢查，renderer 不消費；
-    Bcan 端以 IDA 實測，consumer 只有解碼、狀態驗證器與存檔序列化三處。因此軟體 oracle
-    無法回答此題，下一步只剩實機訊號量測。
+12. **F003 pixel-mode bit 3 的 oracle 邊界已釐清**（f003-video-mode.md §7）：Bcan 每幀由
+    `sub_140082130` 建立 snapshot 供 renderer `sub_14009D6E0` 使用；該建構器以一次 8-byte
+    讀取取得 `video+588..595`，只取用低 4 byte（video flags 與圖層致能），**pixel mode 與
+    gfx mode 兩個 byte 未進入 snapshot**。因此 Bcan 的 renderer 結構上不依賴 `$F001F0`，
+    MAME 亦然。軟體 oracle 無法回答此題，下一步只剩實機訊號量測。
+13. **Bcan 的 sound RAM 模型已由反編譯確認**（memory-map.md §5.1）：65C02 側以未遮罩的
+    16-bit 位址索引同一塊緩衝區、I/O 只在 `$0400–$04FF` 攔截，68k 側轉發完整位址，
+    存檔序列化 `0x10000/0x10000/0x8000` 三塊。即 Bcan 假設 64 KiB、無 A15 alias。
 
 外部來源複查：`supracan.cpp`、`umc6650.cpp`、`umc6619_sound.cpp` 的固定 commit `6ae579a`
 與 2026-09-01 的 master 逐 byte 相同；`superacan-notes` 仍為 `63731a2`、`angelosa/hw_docs`

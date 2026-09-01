@@ -1,5 +1,26 @@
 # 工作歷程
 
+## 2026-09-01：Bcan 反編譯確認 sound RAM 模型與 pixel-mode 消費者
+
+- 工具：IDA Pro 9.4（`ida-pro-9.4-idapython:locked-v1`，headless `idat -A -S`，Hex-Rays），
+  對本機 `Bcan008b/Bcan.exe.i64` 只讀分析；分析副本用完刪除。
+- **sound RAM**：65C02 側 `sub_1400A59C0`（讀）／`sub_1400A5220`（寫）以完整 16-bit 位址
+  `switch`，`$0400–$04FF` 逐一列為 I/O case，其餘 `default:` 走
+  `*(BYTE *)(*(QWORD *)(obj+16) + a2)`——未遮罩索引同一塊緩衝區。68k 側
+  `SystemBus` 判斷 `(addr & $FF0000) == $E80000` 後轉發完整位址；分類器保留
+  `addr − $E80000`。存檔機器區段（`ACMS`）序列化 `0x10000`／`0x10000`／`0x8000` 三塊。
+  結論：Bcan 假設 64 KiB、無 A15 alias，寫入 memory-map.md §5.1。
+- **pixel mode**：Bcan 每幀由 `sub_140082130` 建 snapshot 給 renderer `sub_14009D6E0`
+  （輸入含 VRAM `0x20000`、palette 256、輸出 76800 像素）。建構器以
+  `mov rax,[rdx+29324h]` 一次取 `video+588..595`，只用低 4 byte（video flags 與各層致能
+  位元）；byte 6（pixel mode）與 byte 7（gfx mode）未進入 snapshot。因此 Bcan 的 renderer
+  結構上不依賴 `$F001F0`；附帶發現 Bcan 也不使用全域 gfx mode，色深改由各層 mode 暫存器
+  決定，與 MAME 的 `get_tilemap_region()` 不同。
+- 方法教訓：上一輪只掃「直接結構位移」就下 renderer 不消費的結論，正對照（tilemap base
+  等必用欄位同樣掃不到）顯示該方法看不見 snapshot 路徑。這次改以
+  screenshot 字串 → `sub_140048500` → `sub_140048E40` → snapshot 建構器 → renderer
+  的呼叫鏈逐段確認，f003-video-mode.md §7 已改寫為此證據鏈。
+
 ## 2026-09-01：三個未定案項目的補證
 
 - 目標：依序處理 sound RAM 32／64 KiB、`$E90014/16` 的兩套解讀、F003 pixel-mode bit 3。
