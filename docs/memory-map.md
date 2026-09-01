@@ -109,7 +109,7 @@ MAME 與 Bcan 對同一組埠有部分不同命名；下表把兩邊並列，衝
 | `$0C` | Raster「line off」觸發：同格式，到線時解除 IRQ5 |
 | `$08` | video flags：bit11 interlace、bit10 global double-height、bit9 overscan（224/240）、bit8 h256/h320；bit7–4 normal layer 1–4、bit3 sprite、bit2 ROZ、bit1/0 window clip 1/2 enable |
 | `$10–$1E` | Sprite DMA：count、dest MSW/LSW、src inc、src MSW/LSW、control |
-| `$20/$22/$24/$26` | sprite base addr（<<2）、sprite count（+1）、mono color、flags（bit0：8bpp/4bpp） |
+| `$20/$22/$24/$26` | sprite base addr（word index ＝值×2）、sprite count（+1）、mono color、flags（bit0：8bpp/4bpp）。表項目 4 word 的逐欄位語意、縮放與 mosaic 公式見 [sprite-format.md](sprite-format.md) |
 | `$100–$10E` | Tilemap 0：tile mode、scrollx、scrolly、base addr（<<1）、mode、linescrollx addr、lineselect addr |
 | `$120–$12E` | Tilemap 1（同格局） |
 | `$140–$14E` | Tilemap 2（同格局） |

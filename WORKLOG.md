@@ -1,5 +1,27 @@
 # 工作歷程
 
+## 2026-09-02：sprite 表的縮放與 mosaic 欄位定案
+
+- 起因是 rich2demo 記下的分歧：同一筆 sprite 表項目，本專案畫 8×8，Bcan 畫成約 40×6 的
+  橫條。反編譯 Bcan 的 sprite 迴圈後看出成因——我們當成「保留位元＋致能位元」的欄位，
+  其實是縮放：
+  - `word2` bits 15–11 是水平縮放，`width = (hscale + 6×nw) / (hscale + 1)`，1:1 的值是 5。
+  - `word0` bits 15–13 是垂直縮放，`height = vscale ? (vscale + 2×nh − 1)/vscale : 3×nh`，
+    1:1 的值是 2。我們原本把 bit14 當致能位元，那其實只是 `vscale = 2` 的一個位元。
+  - `word1` bits 5–3 是 mosaic，塊大小 = 值 + 1。
+- 量測用 `homebrew/spriteprobe/`：兩頁卡帶各 24 筆 sprite 排成 4×6，每格只差一個欄位值。
+  第一版探針的 sprite 圖形是純白，**外接矩形 24／24 全中，取樣卻整片是錯的**——單色圖
+  看不出 mosaic 正在把畫面切塊。改成「像素值 = x + 8y + 64t、調色盤把座標編進 RGB」的
+  解碼圖之後，截圖上每個像素都能反推來源座標，取樣函式才量得出來：
+  `src = (dst / m × m) × native / drawn`，塊原點是 `floor(d/m)×m`，**不是位元遮罩**
+  （量到 m = 3 與 6 都成立，位元遮罩在這兩個值會錯）。
+- 實作進 `../superacan-emu` 後，兩頁 48 個案例與 Bcan 逐像素相同（相異 0／76800），
+  涵蓋縮放、mosaic、整體翻轉、tile entry 翻轉、2×2 子 tile 表與 ySize 索引。
+- 回歸驗證：本地五款 ROM 各 1500 幀、每 150 幀取樣，共 30 個檢查點，改動前後完全相同。
+  已發行軟體在這些段落用的都是 1:1 且 mosaic 0，縮放與 mosaic 是有硬體、軟體沒用到的能力。
+- 結論寫入 [docs/sprite-format.md](docs/sprite-format.md)。證據等級 `confirmed-Bcan`，
+  硬體真相仍待實機訊號。
+
 ## 2026-09-01：大富翁2 台灣棋盤的自製 demo 卡帶
 
 - 新增 `homebrew/rich2demo/`：1 MiB 自製卡帶，以原版 11×11 視窗顯示台灣棋盤，按 A 擲骰、

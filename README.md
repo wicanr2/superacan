@@ -69,6 +69,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [逐晶片模擬實作指南](docs/chip-emulation-guide.md)
 - [UM70C188 調色盤／RAMDAC 研究](docs/palette-dac.md)
 - [F003 UM6618 pixel-mode producer 與 `$F001F0` 資料流](docs/f003-video-mode.md)
+- [UM6618 sprite 表格式與縮放／mosaic](docs/sprite-format.md)
 - [反編譯追資料流的方法與陷阱](docs/re-method-decompiler-dataflow.md)
 - [軟體模擬資料充分度評估](docs/emulation-readiness-assessment.md)
 - [文件完整度複查與可補來源](docs/documentation-review.md)

@@ -6,7 +6,7 @@
 |---|---|---|---|
 | BIOS／IPL | 完整涵蓋固定 dump、vectors、控制流與 hash | MAME ROM definitions | 只剩 invalid-key 動態實驗與其他 revision provenance |
 | 正式軟體目錄 | 本輪補齊 F001–F012、標題、serial、hash、NVRAM 提示 | MAME `hash/supracan.xml`（CC0） | 對本地九款建立正常玩家路徑矩陣 |
-| UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ 定義本輪補強 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
+| UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ、**sprite 表逐欄位＋縮放／mosaic** 已補齊 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
 | UM6619 | 主要 PCM／DMA／timer 可實作 | MAME sound device＋本地遊戲 driver | envelope／release 仍需實機或更多 driver consumer |
 | UM70C188 | 型號／接線已知；F003 `$0001/$0009` 動態切換、`$27EE` shadow 與 runtime 解壓 producer 已確認 | Bitsavers UMC datasheet＋`PPU.sch`＋ROM＋6000-frame oracle trace | 形式化 F003 解碼格式並做同 save-state bit 3 A/B，才能判斷 direct-color |
 | 卡帶／SRAM | raw ROM、雙 part、32 KiB fallback 已知 | MAME software list＋板級 schematic | 實拍各型卡帶 PCB，確認哪些 serial 真有 SRAM／電池 |
