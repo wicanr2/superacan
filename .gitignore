@@ -4,3 +4,4 @@ Bcan008b.zip
 *.zip
 *.i64
 __pycache__/
+homebrew/*/build/
