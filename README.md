@@ -75,6 +75,7 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [遊戲音效驅動與通訊協定](docs/sound-driver.md)
 - [硬體圖片來源與授權](assets/hardware/README.md)
 - [自製測試卡帶 bit3probe](homebrew/bit3probe/README.md)
+- [大富翁2 棋盤 demo 卡帶 rich2demo](homebrew/rich2demo/README.md)
 - [工作歷程](WORKLOG.md)
 
 ## 分析工具
