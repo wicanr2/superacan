@@ -15,7 +15,7 @@
 | F004 | `speedyd` | 1995 | AV Artisan | Speedy Dragon / Yin Su Fei Long | 音速飛龍 | 2 MiB |
 | F005 | `staiwbbl` | 1995 | C&E | Super Taiwanese Baseball League / Chao Ji Zhong Hua Zhi Bang Lian Meng | 超級中華職棒聯盟 | 2 MiB |
 | F006 | `jttlaugh` | 1995 | Funtech | Journey to the Laugh / Xi You Ji | 嘻遊記 | 2 MiB |
-| F007 | `slghtsag` | 1996 | Kingformation | Super Light Saga - Dragon Force / Chao Ji Guang Ming Zhan Shi | 超級光明戰史 | 2 MiB＋1 MiB |
+| F007 | `slghtsag` | 1996 | Kingformation（＝**精訊資訊有限公司**，見下）| Super Light Saga - Dragon Force / Chao Ji Guang Ming Zhan Shi | 超級光明戰史 | 2 MiB＋1 MiB |
 | F008 | `monopoly` | 1995 | Panda Entertainment Technology | Monopoly: Adventure in Africa / Fei Zhou Tan Xian Da Fu Weng | 非洲探險 | 1 MiB |
 | F009 | `gamblord` | 1996 | Funtech | Gambling Lord / Du Ba | 賭霸 | 2 MiB |
 | F010 | `magipool` | 1996 | Funtech | Magical Pool / Mo Bang Zhuang Qiu | 魔棒撞球 | 2 MiB |
@@ -44,6 +44,17 @@ F012。檔名是本機歷史名稱，不等於正式產品標題。
 | `Boom Zoo (Taiwan).bin` | F011 | `6099bb44` | `0b5fbe2117bb77a827453c5489b3af691e5c7ade` | `090827d00ef8047d2c78cc173d258565b1c3ab01f0d97dc3ed8e08833d370077` |
 
 ROM／BIOS 是本機研究輸入，不加入 Git 或公開發行包；hash 台帳可公開用於辨識，不包含遊戲內容。
+
+### 2.1 F007 的開發商即精訊資訊有限公司
+
+1995 年 10 月的《A'can 特輯》有一篇「精訊特別報導」，訪問**精訊資訊有限公司**，
+該公司正在開發《超級光明戰史》對應「A'CAN F-16」主機，訪談配圖的門牌英文社名以
+「…formation Co., Ltd.」形式出現。MAME catalog 記的 `Kingformation` 即此公司。
+
+同一篇訪談也交代了年份：受訪者稱「原本的超級光明戰史是要同主機發售」，後有時間上的
+調度，延誤的最大因素是人員流失（美工多為十八至二十歲、面臨兵役）。主機 1995 年 10 月
+發售、本作 1996 年才出，時間差在當月的訪談裡已有說明。詳見
+[console-history.md](console-history.md) §2.3 與 [history/精訊資訊有限公司.md](history/精訊資訊有限公司.md)。
 
 ## 3. F007 雙部分卡帶訂正
 

@@ -49,6 +49,7 @@ exclude:
 include:
   - assets
   - homebrew
+  - docs
 
 defaults:
   - scope:

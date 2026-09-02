@@ -21,8 +21,8 @@
 
 ## 1. 主機簡介：Super A'Can
 
-- **名稱**：Super A'Can（英文代號 **F-16**，中文名「敦煌」）
-- **製造/發行**：敦煌科技（Funtech，聯華電子 UMC 子公司，主機失敗後解散）
+- **名稱**：Super A'Can（開發代號 **F-16**；產品外盒印「SUPER A'can」，1995 年的雜誌書名用「A'can」，內文也以「敦煌主機」指稱）
+- **製造/發行**：敦煌科技（Funtech，主機失敗後解散）。與聯華電子的關係有兩種說法：維基等 (c) 來源記為子公司，1995 年的原廠專訪則描述為技術合作（聯電做關鍵 IC、敦煌提供軟體開發 KNOW-HOW）。**並陳不裁決**，見 docs/console-history.md §3
 - **類型**：第四世代 16 位元家用遊戲機
 - **發售日**：1995-10-25（台灣）
 - **定位**：硬體對標 Sega Mega Drive / Neo Geo 同世代主機；主機與手把外型模仿美版超級任天堂
@@ -31,6 +31,9 @@
 - **未實現計畫**：CD-ROM 與類似 Sega 32X 的硬體提升器，均未推出
 
 來源：
+- **《A'can 特輯》（尖端出版，1995 年 10 月初版）— 發售當月的一手出版品**，
+  內容由開發公司提供；史文與逐項對照見 [docs/console-history.md](docs/console-history.md)
+  與 [docs/history/](docs/history/)
 - [Super A'Can - 維基百科（中文）](https://zh.wikipedia.org/wiki/Super_A%27Can)
 - [Super A'Can - Wikipedia (en)](https://en.wikipedia.org/wiki/Super_A%27Can)
 - [A'Can - 12bit.club](http://fuji.12bit.club/acan/)

@@ -85,6 +85,8 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [65C02 端 BIOS 取樣資料與開機流程](docs/bios-65c02.md)
 - [BIOS 與 ROM 格式](docs/bios-rom-format.md)
 - [正式軟體目錄與本地 ROM 對照](docs/software-catalog.md)
+- [1995 年的說法與 2026 年的量測](docs/console-history.md)
+- [1995 年一手史料：《A'can 特輯》](docs/history/README.md)
 - [逐遊戲驗證矩陣](docs/verify-matrix.md)
 - [Bcan 模擬器逆向分析](docs/emulator-analysis.md)
 - [記憶體映射與硬體暫存器](docs/memory-map.md)
