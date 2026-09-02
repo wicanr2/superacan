@@ -45,7 +45,7 @@ html {
   --pad: 1.6rem;
   --wide: 60rem;                      /* 破格上限：表格／程式碼密集的內容 */
   --avail: calc(100vw - 2 * var(--pad));
-  --toc: 15rem;
+  --toc: 13rem;
 }
 
 body {
@@ -263,13 +263,22 @@ pre code {
   body.has-toc .page {
     display: grid;
     grid-template-columns: var(--toc) minmax(0, 1fr);
-    gap: 2.5rem;
-    max-width: 79rem;
+    gap: 2.2rem;
+    max-width: 76rem;
     margin: 0 auto;
     padding-left: var(--pad);
   }
   body.has-toc .toc { display: block; padding-top: 6.2rem; }
-  body.has-toc { --avail: calc(79rem - var(--toc) - 4rem); }
+  body.has-toc { --avail: calc(76rem - var(--toc) - 3.8rem); }
+
+  /* 正文靠右欄左緣，不再於欄內置中——否則目錄與正文之間會多出一段
+     比目錄本身還寬的空白，整頁重心偏右。 */
+  body.has-toc .masthead,
+  body.has-toc main,
+  body.has-toc footer { margin-left: 0; margin-right: 0; }
+
+  /* 破格表格改成只往右長，避免壓到目錄。 */
+  body.has-toc .scroll.wide { margin-left: 0; }
 }
 
 /* ── 標題錨點 ─────────────────────────────────────────────── */
