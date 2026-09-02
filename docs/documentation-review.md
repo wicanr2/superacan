@@ -5,7 +5,7 @@
 | 文件領域 | 現況 | 本輪找到的補強來源 | 下一個有效動作 |
 |---|---|---|---|
 | BIOS／IPL | 完整涵蓋固定 dump、vectors、控制流與 hash | MAME ROM definitions | 只剩 invalid-key 動態實驗與其他 revision provenance |
-| 正式軟體目錄 | 本輪補齊 F001–F012、標題、serial、hash、NVRAM 提示 | MAME `hash/supracan.xml`（CC0） | 對本地九款建立正常玩家路徑矩陣 |
+| 正式軟體目錄 | F001–F012、標題、serial、hash 齊備；九款的開機路徑檢查點見 [verify-matrix.md](verify-matrix.md) | MAME `hash/supracan.xml`（CC0） | 補逐款玩家路徑腳本；缺 F009／F010／F012 映像 |
 | UM6618 | 位址骨架完整；第四層、pixel/gfx mode、window／IRQ、**sprite 表逐欄位＋縮放／mosaic** 已補齊 | MAME driver 作者 `hw_docs/pergame.md` `1b9e8fe` | 以 F003/F005/F007 的 consumer 驗證第四層、priority、ROZ／window |
 | UM6619 | 主要 PCM／DMA／timer 可實作 | MAME sound device＋本地遊戲 driver | envelope／release 仍需實機或更多 driver consumer |
 | UM70C188 | 型號／接線已知；F003 `$0001/$0009` 動態切換、`$27EE` shadow 與 runtime 解壓 producer 已確認 | Bitsavers UMC datasheet＋`PPU.sch`＋ROM＋6000-frame oracle trace | 形式化 F003 解碼格式並做同 save-state bit 3 A/B，才能判斷 direct-color |
@@ -71,11 +71,16 @@
     16-bit 位址索引同一塊緩衝區、I/O 只在 `$0400–$04FF` 攔截，68k 側轉發完整位址，
     存檔序列化 `0x10000/0x10000/0x8000` 三塊。即 Bcan 假設 64 KiB、無 A15 alias。
 
-14. **第四層與 window 1 的 consumer 已量到**（2026-09-02，本地八款 `.bin` 各 900 幀，
-    `--watch f00160-f0017f,f001d8-f001df`）：`$F00160–$F0017F` 由 **F005、F003** 寫滿整個
-    區塊；`$F001D8–$F001DE` 由 **Boom Zoo、嘻遊記、F005、F003** 寫入。兩者先前都被記成
-    「尚無遊戲路徑證實」，該敘述已訂正。這代表兩個缺口不需要自製探針，用既有商業 ROM
-    加 Bcan 同畫面差分就能收斂。F007 為 ZIP 容器，未在該輪掃描內。
+14. **第四層與 window 1 都沒有 oracle，也沒有軟體在用**（2026-09-02）。本地八款 `.bin`
+    各 1800 幀，逐一收集 `$F00008` 的所有寫入值後取聯集：**bit 4（第四 normal layer）
+    與 bit 0（window 1）從未被設起**。兩者的功能暫存器確實有人寫（第四層由 F005／F003
+    寫成全 0，window 1 由四款寫），但寫入不等於啟用。Bcan 側同樣沒有實作：snapshot 只有
+    三組 tilemap 欄位、renderer 圖層迴圈只跑三次，window 1 的 snapshot 欄位一次都沒被讀。
+    因此這兩項應標 `unknown`，不是「已知缺口造成畫面錯誤」，也不該憑對稱猜補。
+
+    量測方法上的坑：`--watch` 只保留前 64 筆事件，同時盯多個位址區段時會被最吵的那段
+    淹掉，得到「看起來沒用到」的假陰性。判斷功能有沒有被啟用要看致能位元（`$F00008`
+    的寫入很稀疏），不要看功能暫存器有沒有被寫。
 
 外部來源複查：`supracan.cpp`、`umc6650.cpp`、`umc6619_sound.cpp` 的固定 commit `6ae579a`
 與 2026-09-01 的 master 逐 byte 相同；`superacan-notes` 仍為 `63731a2`、`angelosa/hw_docs`

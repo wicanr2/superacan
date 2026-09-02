@@ -106,18 +106,22 @@ CPU 寫 UM6618 registers / 128 KiB 可見 VRAM / 256-entry palette
 
 - 目前 oracle 的三個 tilemap 支援尺寸、signed scroll、wrap、全層／tile flip、mosaic、linescroll、lineselect、
   8/4/2-bpp 與 palette bank。像素 0 依色深 mask 視為透明。
-- `$F00160–$F0017F` 第四 normal layer 尚未進入 oracle。實測本地八款 `.bin` 中
-  **F005 超級中華職棒聯盟與 F003 邪惡之子會寫滿整個暫存器區塊**（900 幀，
-  `--watch f00160-f0017f`），因此這兩款目前是少畫一層在跑。應以它們建立 READY spec
-  後實作，並與 Bcan 同畫面差分。F007 為 ZIP 容器，未在該輪掃描內。
+- `$F00160–$F0017F` 第四 normal layer 未實作，而且目前**沒有 oracle**。本地八款 `.bin`
+  各 1800 幀，沒有任何一款把 video flags 的 bit 4 設起來；F005 與 F003 確實會寫該區塊，
+  但寫進去的值全是 `$0000`，屬初始化清空。Bcan 也沒有實作它——每幀 snapshot 只有三組
+  tilemap 欄位（`+32`／`+52`／`+72`，分別由 flags bit7／6／5 致能），renderer 的圖層
+  迴圈只跑三次。既不知道它該長什麼樣，也沒有軟體在用它，因此不應憑對稱猜補。
 - ROZ 使用 24.8 scroll 與 8.8 A/B/C/D fixed-point，每像素累加來源座標；另保留遊戲使用的
   per-line parameter table。開機 logo 的 1-bpp alternate layout 以 VRAM write 時同步建立的地址
   重排副本讀取。
 - sprite table 每筆 4 word，支援 direct／子 tile table、尺寸、bank、flip、palette、priority 與
   mask buffer；sprite DMA 由專屬 register block觸發。
-- window 0 依每行 min/max clip 表繪製。window 1 的對稱實作仍是保守假說，但**已有四款
-  具名 consumer**：Boom Zoo、嘻遊記、F005、F003 都會寫 `$F001D8–$F001DE`（900 幀實測）。
-  在與 Bcan 做過同畫面差分之前，仍不能列為 confirmed parity。
+- window 0 依每行 min/max clip 表繪製，逐欄位與 Bcan 一致：priority `>>13&3`、
+  scroll 為 10-bit 有號（`< $200` 為正，否則減 1024）、control bit8 選逐行表、
+  bit11 反相、pen 取低 8 bit、每行兩個 word 為 min/max。
+- window 1 同樣沒有 oracle。四款遊戲會寫它的暫存器（Boom Zoo、嘻遊記、F005、F003），
+  但**致能位元 flags bit 0 從來沒有被設起來**，而 Bcan 的 renderer 完全不讀 window 1
+  的 snapshot 欄位（`+172`），只把它的致能狀態併進回傳旗標。本專案的對稱實作仍是假說。
 
 ### 6.2 顯示與中斷
 

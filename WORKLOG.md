@@ -1,5 +1,25 @@
 # 工作歷程
 
+## 2026-09-02：驗證矩陣，以及第四層／window 1 的斷言訂正
+
+- 新增 [`tools/verify_matrix.py`](tools/verify_matrix.py) 與
+  [`docs/verify-matrix.md`](docs/verify-matrix.md)：本地九個映像各 1800 幀，
+  每 300 幀一個畫面檢查點，加上「曾致能哪些圖層」。
+- **訂正一個我自己當天稍早推送出去的錯誤斷言。** 先前寫「F005 與 F003 會寫滿第四層的
+  整個暫存器區塊，因此少畫一層在跑」「window 1 已有四款具名 consumer」。實際量測：
+  - 九款都沒有把 `$F00008` 的 **bit 4（第四層）或 bit 0（window 1）** 設起來。
+  - F005／F003 寫進第四層區塊的值**全是 `$0000`**，是初始化清空。
+  - Bcan 也沒有實作這兩者：snapshot 只有三組 tilemap 欄位、renderer 圖層迴圈只跑三次，
+    window 1 的 snapshot 欄位 `+172` 一次都沒被讀。
+  - 順帶量到 **normal layer 2 也從未被啟用**（實作了但沒有軟體驗證過）。
+  教訓：**「有寫這個暫存器」不等於「有用這個功能」。** 判斷功能是否啟用要看致能位元。
+- 量測方法的坑：`--watch` 只保留前 64 筆事件，同時盯多個區段會被最吵的那段淹掉，
+  產生「看起來沒用到」的假陰性。第一版功能欄就是這樣把四款有寫 window 1 暫存器的
+  遊戲全報成只有 window 0。
+- `../superacan-emu` 一併修正 window 1 的致能位元（`flags&2` → `flags&1`，Bcan 的
+  snapshot builder 為 `+160←v2&2`、`+170←v2&1`）。四款會寫 window 1 暫存器的遊戲
+  改前改後畫面完全相同，是純正確性修正。
+
 ## 2026-09-02：rich2demo 補上可重跑的部分與可進版控的截圖
 
 - **匯出程式入庫**（`homebrew/rich2demo/export/main.go`）。先前它只存在暫存目錄，
