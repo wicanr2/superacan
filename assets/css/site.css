@@ -31,6 +31,17 @@
 html {
   font-size: 17px;                    /* 全站唯一的字級基準，其餘一律 rem */
   -webkit-text-size-adjust: 100%;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+
+/* 版式與主題解耦：閱讀列寬由文字決定，破格寬度由表格內容決定。 */
+:root {
+  --measure: 46rem;                   /* 正文列寬（含左右內距）*/
+  --pad: 1.6rem;
+  --wide: 60rem;                      /* 破格上限：表格／程式碼密集的內容 */
+  --avail: calc(100vw - 2 * var(--pad));
+  --toc: 15rem;
 }
 
 body {
@@ -56,9 +67,9 @@ code, kbd, pre, samp, .mono {
   align-items: baseline;
   justify-content: space-between;
   gap: 1.5rem;
-  max-width: 46rem;
+  max-width: var(--measure);
   margin: 0 auto;
-  padding: 1.6rem 1.6rem 1rem;
+  padding: 1.6rem var(--pad) 1rem;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -79,9 +90,9 @@ code, kbd, pre, samp, .mono {
 .masthead nav a:hover { color: var(--key); }
 
 footer {
-  max-width: 46rem;
+  max-width: var(--measure);
   margin: 4.5rem auto 3rem;
-  padding: 1.4rem 1.6rem 0;
+  padding: 1.4rem var(--pad) 0;
   border-top: 1px solid var(--rule);
   color: var(--ink-3);
   font-size: .82rem;
@@ -93,9 +104,9 @@ footer p { margin: 0 0 .6rem; }
 /* ── 內文 ─────────────────────────────────────────────────── */
 
 main {
-  max-width: 46rem;
+  max-width: var(--measure);
   margin: 0 auto;
-  padding: 2.6rem 1.6rem 0;
+  padding: 2.6rem var(--pad) 0;
 }
 
 main h1 {
@@ -201,6 +212,68 @@ pre code {
 /* ── 表格：只用細分隔線，無粗外框、無彩色表頭、無斑馬紋 ──── */
 
 .scroll { overflow-x: auto; margin: 0 0 2.05rem; }
+
+/* 破格：只給欄數多或真的溢出的表。用外距推開，不用 padding——
+   在 border-box 下 width:calc(100% + N) 配 padding:N 會完全互相抵消。 */
+.scroll.wide {
+  width: min(var(--wide), var(--avail));
+  margin-left: calc((100% - min(var(--wide), var(--avail))) / 2);
+}
+
+/* ── 頁內目錄 ─────────────────────────────────────────────── */
+
+.toc { display: none; }
+
+.toc nav {
+  position: sticky;
+  top: 2.6rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  font-size: .82rem;
+  line-height: 1.65;
+}
+
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: 0 0 .5rem; }
+.toc li.sub { padding-left: .9rem; font-size: .95em; }
+
+.toc a {
+  color: var(--ink-2);
+  text-decoration: none;
+  display: block;
+  border-left: 1px solid transparent;
+  padding-left: .7rem;
+  margin-left: -.7rem;
+}
+.toc a:hover { color: var(--key); }
+.toc a.here { color: var(--key); border-left-color: var(--key); }
+
+/* 目錄只在放得下的時候出現；放不下時回落成單欄，不擠壓正文。 */
+@media (min-width: 79rem) {
+  body.has-toc .page {
+    display: grid;
+    grid-template-columns: var(--toc) minmax(0, 1fr);
+    gap: 2.5rem;
+    max-width: 79rem;
+    margin: 0 auto;
+    padding-left: var(--pad);
+  }
+  body.has-toc .toc { display: block; padding-top: 6.2rem; }
+  body.has-toc { --avail: calc(79rem - var(--toc) - 4rem); }
+}
+
+/* ── 標題錨點 ─────────────────────────────────────────────── */
+
+.anchor {
+  margin-left: .45rem;
+  color: var(--ink-3);
+  text-decoration: none;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity .12s;
+}
+h2:hover > .anchor, h3:hover > .anchor, .anchor:focus { opacity: 1; }
+h2 > .anchor, h3 > .anchor { font-size: .78em; }
 
 table {
   border-collapse: collapse;
