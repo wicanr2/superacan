@@ -111,6 +111,9 @@
 - [x] ROM header 格式與 bank 切換（mapper）機制 → 無外加標頭、16-bit word-swap 向量表格式、無 mapper；入口點已驗證為合法 68k 程式碼（[docs/bios-rom-format.md](docs/bios-rom-format.md)）
 - [x] 存檔（save state）格式 → magic `ACANRTS`、10 槽位、96-byte 標頭（version/headersize/ROM SHA-256/整體 SHA-256/payload 大小），payload 欄位版面待查；cheat 檔實為 **tab 分隔純文字**（標頭 `BCAN_CHT_1`，相容舊 magic `ACAN_CHT_1`）（[docs/emulator-analysis.md](docs/emulator-analysis.md) §4）
 - [x] 遊戲 65C02 音效驅動反組譯 → [docs/sound-driver.md](docs/sound-driver.md)。結論：68k 把命令串寫到 sound RAM `$0300`、寫 `$E9000A` 觸發 65C02 IRQ bit5；6 條命令（UM6619 raw 寫/啟停通道/取樣播放等），ack=`$0300=$FF`；手把由 65C02 掃描放 `$0200/$0202`；取樣 = 68k DMA 入 sound RAM + IRQ6 雙緩衝串流；UM6619 為 PCM/取樣式合成（無 FM 跡象）。Speedy Dragon 另有第二套音樂驅動、Boom Zoo 用壓縮上傳（自訂 Huffman/RLE）
+- [x] UM6618 sprite 表欄位（縮放、mosaic、翻轉、mask 模式與半透明）→ [docs/sprite-format.md](docs/sprite-format.md)。mask 是**整幀後處理**：模式 2／3 只寫遮罩、模式 1 照畫並留備份，全部畫完才結算；整幀沒有任何遮罩時模式 1 轉為半透明（底下有 sprite 就相加調色盤索引，否則與背景取平均）。自製卡帶 `homebrew/spriteprobe/` 四頁 87 個案例逐像素相符
+- [x] 一般圖層與 ROZ 的 mosaic → [docs/tilemap-format.md](docs/tilemap-format.md)。塊大小是欄位值 **+1**（查表 `floor(d/k)×k`，不是 `2^m` 位元遮罩），X／Y 兩軸都套用，ROZ 共用同一組表。自製卡帶 `homebrew/mosaicprobe/` 四顆映像逐像素相符
+- [x] 主機 DMA control 位元 → [docs/host-dma.md](docs/host-dma.md)。`& $8800` 觸發、搬 `count + 1` 個單位、`bit12` word、`bit10/9` 遞減、`bit8` 每 16 byte 退回、`$A800` 為相等比對特例；非零但無觸發位元者回錯誤碼且不寫入暫存器。自製卡帶 `homebrew/dmaprobe/` 12 個案例逐 byte 相符
 - [x] CPU 時脈定案 → Bcan 反編譯：master tick 107.38635 MHz，68k=10.738635 MHz、65C02=3.579545 MHz（流傳值成立，推翻 MAME /6 /12 猜測）（[docs/memory-map.md](docs/memory-map.md) §1、[docs/emulator-analysis.md](docs/emulator-analysis.md) §4.1）
 
 ### 4.6 模擬器機制（逆向確認，(a) 級）

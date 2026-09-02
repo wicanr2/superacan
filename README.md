@@ -56,8 +56,11 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 生成，131 種地形各配一色加格線；原版美術模式的畫面只留本機。左圖與 Bcan 0.0.8b 跑同一顆
 映像逐像素相同。
 
-另有兩顆量測用卡帶：`homebrew/bit3probe/` 解出 `$F001F0` bit 3 是 ROZ 的 tilemap／bitmap
-切換，`homebrew/spriteprobe/` 解出 sprite 表的縮放與 mosaic 欄位。三顆的截圖判讀見
+另有四顆量測用卡帶，各自把一個原本只能用讀反編譯推測的問題變成可重跑的量測：
+`homebrew/bit3probe/`（`$F001F0` bit 3 是 ROZ 的 tilemap／bitmap 切換）、
+`homebrew/spriteprobe/`（sprite 表的縮放、mosaic、翻轉與 mask 模式）、
+`homebrew/mosaicprobe/`（一般圖層與 ROZ 的 mosaic 是查表不是位元遮罩）、
+`homebrew/dmaprobe/`（主機 DMA 的 control 位元）。截圖判讀見
 [測試結果截圖說明](docs/test-screenshots.md)。
 
 ## 目前狀態
@@ -85,7 +88,9 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [逐晶片模擬實作指南](docs/chip-emulation-guide.md)
 - [UM70C188 調色盤／RAMDAC 研究](docs/palette-dac.md)
 - [F003 UM6618 pixel-mode producer 與 `$F001F0` 資料流](docs/f003-video-mode.md)
-- [UM6618 sprite 表格式與縮放／mosaic](docs/sprite-format.md)
+- [UM6618 sprite 表格式、縮放／mosaic 與 mask 模式](docs/sprite-format.md)
+- [一般圖層與 ROZ 的 mosaic](docs/tilemap-format.md)
+- [主機 DMA control 位元](docs/host-dma.md)
 - [測試結果截圖說明](docs/test-screenshots.md)
 - [反編譯追資料流的方法與陷阱](docs/re-method-decompiler-dataflow.md)
 - [軟體模擬資料充分度評估](docs/emulation-readiness-assessment.md)
@@ -94,6 +99,9 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 - [硬體圖片來源與授權](assets/hardware/README.md)
 - [測試截圖的來源與邊界](assets/screenshots/README.md)
 - [自製測試卡帶 bit3probe](homebrew/bit3probe/README.md)
+- [sprite 欄位量測卡帶 spriteprobe](homebrew/spriteprobe/README.md)
+- [mosaic 量測卡帶 mosaicprobe](homebrew/mosaicprobe/README.md)
+- [DMA control 量測卡帶 dmaprobe](homebrew/dmaprobe/README.md)
 - [大富翁2 棋盤 demo 卡帶 rich2demo](homebrew/rich2demo/README.md)
 - [工作歷程](WORKLOG.md)
 

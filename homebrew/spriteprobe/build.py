@@ -14,7 +14,8 @@ AUTH_OFFSET, AUTH_SIZE = 0x2000, 0x400
 # 每一格是一筆 sprite 表項目。第 1 頁掃縮放與 mosaic，第 2 頁掃翻轉與多 tile。
 # 1:1 的組合是 hscale=5、vscale=2；mosaic = word1 bits 5-3 的值 + 1。
 # 欄位：(hscale, vscale, mosaicField, xlog, ySizeIndex, flipX, flipY, tileEntry)
-NEUTRAL = dict(hscale=5, vscale=2, mos=0, xlog=0, ysize=0, fx=0, fy=0, w3=0x8000 | 1)
+NEUTRAL = dict(hscale=5, vscale=2, mos=0, xlog=0, ysize=0, fx=0, fy=0,
+               mask=0, cell=None, dx=0, dy=0, w3=0x8000 | 1)
 
 
 def case(**kw):
@@ -58,6 +59,35 @@ Y0, YSTEP = 24, 56
 TILE = 1                    # sprite 圖形放在 tile 1（VRAM byte 64）
 
 
+# 第 3 頁：mask 模式（word1 bits 9-8）。每一格放兩個 sprite，A 用 tile 1、B 用 tile 2
+# （解碼圖把 tile 編號編進藍色通道，所以看得出是誰畫的）。掃 A×B 的 16 種模式組合。
+PAGE3 = []
+for _cell, (_ma, _mb) in enumerate(
+        [(a, b) for a in range(4) for b in range(4)]):
+    PAGE3.append(case(mask=_ma, cell=_cell, w3=0x8000 | 1))
+    PAGE3.append(case(mask=_mb, cell=_cell, dx=6, dy=6, w3=0x8000 | 2))
+
+
+# 第 4 頁：整幀沒有任何 mask 寫入者（模式 2／3）時，mask=1 走的是混色路徑。
+# 每格把 1–3 個 sprite 疊在同一位置，靠解碼圖的像素值反推混色公式。
+PAGE4 = []
+
+
+def _stack(cell, entries):
+    for mask, tile, dx, dy in entries:
+        PAGE4.append(case(mask=mask, cell=cell, dx=dx, dy=dy, w3=0x8000 | tile))
+
+
+_stack(0, [(1, 1, 0, 0)])                              # 單獨一個半透明 sprite
+_stack(1, [(0, 1, 0, 0), (1, 2, 0, 0)])                # 不透明底 ＋ 半透明
+_stack(2, [(1, 1, 0, 0), (1, 2, 0, 0)])                # 兩個半透明相疊
+_stack(3, [(1, 1, 0, 0), (0, 2, 0, 0)])                # 半透明底被不透明蓋掉
+_stack(4, [(0, 1, 0, 0), (1, 2, 4, 4)])                # 只重疊一部分
+_stack(5, [(1, 3, 0, 0)])                              # 換一張 tile 的半透明
+_stack(6, [(1, 1, 0, 0), (1, 1, 0, 0)])                # 同一張圖疊自己
+_stack(7, [(0, 1, 0, 0), (1, 2, 0, 0), (1, 3, 0, 0)])  # 三層，看備份留的是哪一層
+
+
 def deswap(data: bytes) -> bytes:
     return bytes(data[i ^ 1] for i in range(len(data)))
 
@@ -80,10 +110,11 @@ def make_palette() -> bytes:
 def make_sprites(cases) -> bytes:
     out = bytearray()
     for index, c in enumerate(cases):
-        x = X0 + (index % COLS) * XSTEP
-        y = Y0 + (index // COLS) * YSTEP
+        cell = index if c["cell"] is None else c["cell"]
+        x = X0 + (cell % COLS) * XSTEP + c["dx"]
+        y = Y0 + (cell // COLS) * YSTEP + c["dy"]
         word0 = (c["vscale"] << 13) | (c["ysize"] << 9) | (y & 0x1ff)
-        word1 = (c["fx"] << 11) | (c["fy"] << 10) | (c["mos"] << 3) | c["xlog"]
+        word1 = (c["fx"] << 11) | (c["fy"] << 10) | (c["mask"] << 8) | (c["mos"] << 3) | c["xlog"]
         word2 = (c["hscale"] << 11) | (0 << 9) | (x & 0x1ff)
         out += struct.pack(">4H", word0, word1, word2, c["w3"])
     return bytes(out)
@@ -127,12 +158,12 @@ YSIZE_TABLE = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 22, 24, 26)
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--auth-rom", required=True)
-    ap.add_argument("--page", type=int, choices=(1, 2), default=1,
-                    help="1：縮放與 mosaic；2：翻轉與多 tile")
+    ap.add_argument("--page", type=int, choices=(1, 2, 3, 4), default=1,
+                    help="1：縮放與 mosaic；2：翻轉與多 tile；3：mask 模式；4：mask 混色")
     ap.add_argument("--image", default="acan-m68k:bookworm-v1")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
-    cases = PAGE1 if args.page == 1 else PAGE2
+    cases = {1: PAGE1, 2: PAGE2, 3: PAGE3, 4: PAGE4}[args.page]
     out_name = args.out or f"spriteprobe{args.page}.bin"
 
     os.makedirs(BUILD, exist_ok=True)
@@ -150,13 +181,14 @@ def main() -> int:
         f"        .word   {len(cases) - 1}\n")
 
     print(f"第 {args.page} 頁，{len(cases)} 個案例")
-    print("格號 hs vs mos xlog ys fx fy    w3 | 預期 w×h | 位置")
+    print("格號 hs vs mos xlog ys fx fy mask    w3 | 預期 w×h | 位置")
     for index, (c, w, h) in enumerate(predictions(cases)):
-        x = X0 + (index % COLS) * XSTEP
-        y = Y0 + (index // COLS) * YSTEP
+        cell = index if c["cell"] is None else c["cell"]
+        x = X0 + (cell % COLS) * XSTEP + c["dx"]
+        y = Y0 + (cell // COLS) * YSTEP + c["dy"]
         print(f"{index:4d} {c['hscale']:2d} {c['vscale']:2d} {c['mos']:3d} "
               f"{c['xlog']:4d} {c['ysize']:2d} {c['fx']:2d} {c['fy']:2d} "
-              f"${c['w3']:04X} | {w:3d}×{h:<3d} | ({x},{y})")
+              f"{c['mask']:4d} ${c['w3']:04X} | {w:3d}×{h:<3d} | ({x},{y})")
 
     uid = f"{os.getuid()}:{os.getgid()}"
     cmd = [

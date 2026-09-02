@@ -170,14 +170,15 @@ Bcan 在寫入時就把部分 ROZ 暫存器換算成內部位址，倍率不一�
 `$F001F0` bit 3 造成的 ROZ bitmap 路徑（公式、指令位址與自製 ROM 驗證）見
 [f003-video-mode.md](f003-video-mode.md) §7.3、§7.6。
 
-## 4. DMA（b）
+## 4. DMA（a）
 
 - 主機 DMA **2 通道**（非外界流傳的 8 通道；8 之說 **待查證**，MAME 只實作
   ch0/ch1，位於 `$E90020/30`）。
-- 每通道暫存器：source MSW/LSW、dest MSW/LSW、byte count（+1）、control。
-- control `bit15 或 bit11` 觸發；`bit10`=dest 遞減、`bit9`=src 遞減；
-  `0xA800` 為特殊填充/位元組模式（staiwbbl 開機用）；`bit12` 為 word 模式，
-  `bit8` 間接模式（往 `$F00010–$1F` 埠連寫時 dest 每 16 byte 回捲）。
+- 每通道暫存器：source MSW/LSW、dest MSW/LSW、count、control；搬 `count + 1` 個單位。
+- control `& $8800` 不為 0 才觸發；`bit12`=word、`bit10`=dest 遞減、`bit9`=src 遞減、
+  `bit8`=word 模式下 dest 每 16 byte 回捲；`$A800`（相等比對）是寫 0／byte 的特例分支。
+- 完整位元表、傳輸後的暫存器狀態、逐 byte 量測與一處回讀差異見
+  [host-dma.md](host-dma.md)。
 - 另有 **sprite DMA**（UM6618 內部，`$F00010` 起）。
 
 ## 5. 65C02（音效 CPU）側（b）
