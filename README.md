@@ -6,6 +6,11 @@
 Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨重製的可追溯基礎。
 目前成果是研究文件與分析工具，**不是可直接遊玩的模擬器或遊戲發行包**。
 
+文件的網頁版在 **<https://wicanr2.github.io/superacan/>**，分組導覽與相互引用比
+在 GitHub 上逐檔翻閱好讀。站台由 GitHub Pages 直接建置本 repo 的 markdown，
+版面設定在 [`_config.yml`](_config.yml) 與 [`_layouts/`](_layouts/)；
+本機預覽用 `jekyll build --baseurl ""`。
+
 > 上圖是實機與配件照片；攝影：Evan-Amos，公有領域。完整來源與授權紀錄見
 > [硬體圖片說明](assets/hardware/README.md)。
 

@@ -1,0 +1,57 @@
+title: Super A'Can 知識庫
+description: 台灣自製 16 位元主機的硬體與逆向工程記錄
+lang: zh-Hant-TW
+
+# 專案頁掛在 /superacan 下，不設 baseurl 會讓所有絕對路徑 404。
+# 本機驗證時用 `jekyll build --baseurl ""` 覆蓋。
+url: https://wicanr2.github.io
+baseurl: /superacan
+
+# GitHub Pages 白名單內的三個外掛：既有的 .md 沒有 front matter，
+# 內部連結也都是相對的 .md 路徑，這三個讓它們不必改寫就能直接發佈。
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-relative-links
+  - jekyll-titles-from-headings
+
+relative_links:
+  enabled: true
+  collections: false
+
+titles_from_headings:
+  enabled: true
+  strip_title: true
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  hard_wrap: false
+
+# 研究輸入與產物不進站台。這些檔案本來就在 .gitignore 內，
+# 這裡是為了本機建置時不要把 5 MB 的執行檔與 ROM 複製進 _site。
+exclude:
+  - Bcan008b/
+  - Bcan008b.zip
+  - homebrew/bit3probe/build/
+  - homebrew/dmaprobe/build/
+  - homebrew/mosaicprobe/build/
+  - homebrew/pixelmodeprobe/build/
+  - homebrew/rich2demo/build/
+  - homebrew/soundregprobe/build/
+  - homebrew/spriteprobe/build/
+  - AGENTS.md
+  - CLAUDE.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .gitignore
+
+include:
+  - assets
+  - homebrew
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

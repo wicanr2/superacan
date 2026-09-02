@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.url == "/" %}{{ site.title }}{% else %}{{ page.title | default: page.name }} — {{ site.title }}{% endif %}</title>
+<meta name="description" content="{{ page.description | default: site.description }}">
+<link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+</head>
+<body>
+<header class="masthead">
+  <a class="wordmark" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+  <nav>
+    <a href="{{ '/WORKLOG.html' | relative_url }}">工作歷程</a>
+    <a href="https://github.com/wicanr2/superacan">原始碼</a>
+  </nav>
+</header>
+
+<main>
+<h1>{{ page.title | default: page.name }}</h1>
+{{ content }}
+</main>
+
+<footer>
+  <p>本站內容為逆向工程與硬體研究記錄，結論標註證據等級：(a) 模擬器／BIOS 實測、
+  (b) MAME driver、(c) 二手報導、(p) 實機照片與板級證據。</p>
+  <p>ROM、BIOS 與模擬器執行檔為受版權保護的研究輸入，不在本站與 repo 內。</p>
+</footer>
+
+<script>
+// 寬表加水平捲動容器：只包實際會溢出的表，不一律套用。
+document.querySelectorAll('main table').forEach(function (table) {
+  var box = document.createElement('div');
+  box.className = 'scroll';
+  table.parentNode.insertBefore(box, table);
+  box.appendChild(table);
+});
+</script>
+</body>
+</html>
