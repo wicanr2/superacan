@@ -21,6 +21,8 @@ python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --page 2
 建置時會印出每一格的欄位值與依公式算出的預期寬高，可直接與截圖比對。
 Bcan 端的操作方式（不吃命令列 ROM 參數、要走 GUI）見 `../bit3probe/README.md`。
 
+逐張截圖的判讀方式見 [../../docs/test-screenshots.md](../../docs/test-screenshots.md) §4。
+
 ## 判讀
 
 sprite 圖形是**解碼圖**：像素值 ＝ `x + 8y + 64t`，調色盤把 `x` 編進紅、`y` 編進綠、

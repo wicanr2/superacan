@@ -42,6 +42,8 @@ python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
    並把 backdrop（調色盤索引 0）設成紅（bit 3 開）或綠（bit 3 關）。單看一張截圖的底色
    就能判斷相位，整層沒畫出來時也不會誤判。索引 255 恆為白，作為地圖中央的標示方塊。
 
+逐張截圖的判讀方式見 [../../docs/test-screenshots.md](../../docs/test-screenshots.md) §3。
+
 ## 結果（2026-09-01）
 
 同一顆映像：

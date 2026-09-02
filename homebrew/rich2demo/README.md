@@ -54,6 +54,8 @@ VRAM 版面：tile 資料 `$00000–$0E6FF`、空白 tile 1023 在 `$0FFC0`、ti
 所以少了驅動也能動；**Bcan 不合成**，沒有 65C02 驅動就完全沒有反應。要判斷輸入路徑
 是否真的正確，得以 Bcan 為準。
 
+畫面構成、對拍數字與重現步驟見 [../../docs/test-screenshots.md](../../docs/test-screenshots.md) §2。
+
 ## 已知落差
 
 - **只畫地形層**。原版底圖畫完還會讀疊加層（`docs/re/042` §1 的 `125Ah[row][col]`）

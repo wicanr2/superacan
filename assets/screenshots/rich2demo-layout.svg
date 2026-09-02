@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400"
+     font-family="system-ui, -apple-system, 'Noto Sans TC', sans-serif" font-size="13">
+  <title>rich2demo 的畫面構成</title>
+  <desc>自繪示意圖，說明 264×220 視窗在 320×240 畫面上的位置，以及 24×20 地圖圖磚如何排成 8×8 tile。不含原版美術。</desc>
+
+  <!-- 左：整個畫面 -->
+  <text x="20" y="22" font-weight="600">畫面配置（320×240）</text>
+  <rect x="20" y="34" width="400" height="300" fill="none" stroke="#888" stroke-width="1.5"/>
+  <text x="20" y="352" fill="#666">320 px</text>
+  <text x="424" y="190" fill="#666">240 px</text>
+
+  <!-- 視窗 264×220 置於 (28,10)，1.25 倍 -->
+  <rect x="55" y="46.5" width="330" height="275" fill="none" stroke="#3a6ea5" stroke-width="2"/>
+  <g stroke="#3a6ea5" stroke-width="0.5" opacity="0.55">
+    <line x1="85" y1="46.5" x2="85" y2="321.5"/><line x1="115" y1="46.5" x2="115" y2="321.5"/>
+    <line x1="145" y1="46.5" x2="145" y2="321.5"/><line x1="175" y1="46.5" x2="175" y2="321.5"/>
+    <line x1="205" y1="46.5" x2="205" y2="321.5"/><line x1="235" y1="46.5" x2="235" y2="321.5"/>
+    <line x1="265" y1="46.5" x2="265" y2="321.5"/><line x1="295" y1="46.5" x2="295" y2="321.5"/>
+    <line x1="325" y1="46.5" x2="325" y2="321.5"/><line x1="355" y1="46.5" x2="355" y2="321.5"/>
+    <line x1="55" y1="71.5" x2="385" y2="71.5"/><line x1="55" y1="96.5" x2="385" y2="96.5"/>
+    <line x1="55" y1="121.5" x2="385" y2="121.5"/><line x1="55" y1="146.5" x2="385" y2="146.5"/>
+    <line x1="55" y1="171.5" x2="385" y2="171.5"/><line x1="55" y1="196.5" x2="385" y2="196.5"/>
+    <line x1="55" y1="221.5" x2="385" y2="221.5"/><line x1="55" y1="246.5" x2="385" y2="246.5"/>
+    <line x1="55" y1="271.5" x2="385" y2="271.5"/><line x1="55" y1="296.5" x2="385" y2="296.5"/>
+  </g>
+
+  <!-- 中心格與棋子 -->
+  <rect x="205" y="171.5" width="30" height="25" fill="#3a6ea5" opacity="0.16"/>
+  <circle cx="220" cy="184" r="5" fill="#d94f4f" stroke="#7a2020" stroke-width="1"/>
+  <text x="243" y="181" fill="#333">棋子恆在中心格</text>
+  <text x="243" y="196" fill="#666">貼邊時才偏離</text>
+
+  <path d="M 20 42 L 55 42" stroke="#999" stroke-width="1"/>
+  <text x="24" y="38" fill="#666" font-size="11">28</text>
+  <path d="M 30 34 L 30 46.5" stroke="#999" stroke-width="1"/>
+  <text x="34" y="60" fill="#666" font-size="11">10</text>
+  <text x="60" y="341" fill="#3a6ea5">11×11 格＝264×220，每格 24×20</text>
+
+  <!-- 右：一格如何排成 tile -->
+  <text x="470" y="22" font-weight="600">一格 24×20 如何進 VRAM</text>
+  <rect x="470" y="40" width="192" height="160" fill="none" stroke="#3a6ea5" stroke-width="2"/>
+  <g stroke="#c07a2c" stroke-width="1.2">
+    <line x1="534" y1="40" x2="534" y2="200"/><line x1="598" y1="40" x2="598" y2="200"/>
+    <line x1="470" y1="104" x2="662" y2="104"/><line x1="470" y1="168" x2="662" y2="168"/>
+  </g>
+  <text x="470" y="216" fill="#c07a2c">橘線＝8×8 tile 邊界</text>
+  <text x="470" y="234" fill="#333">24 ＝ 3×8：一列剛好落在三張相鄰 tile 上</text>
+  <text x="470" y="252" fill="#333">20 ＝ 2×8＋4：格會跨 tile 列，但不影響搬移</text>
+
+  <rect x="470" y="40" width="192" height="16" fill="#3a6ea5" opacity="0.22"/>
+  <text x="470" y="270" fill="#3a6ea5">藍色橫帶＝來源的一列，24 byte</text>
+
+  <text x="470" y="284" font-weight="600">搬移</text>
+  <text x="470" y="302" fill="#333">三段 8 byte，目的位址間隔 64</text>
+  <text x="470" y="320" fill="#666" font-family="ui-monospace, monospace" font-size="12">6 × move.l ／ 列</text>
+  <text x="470" y="338" fill="#666" font-family="ui-monospace, monospace" font-size="12">14,520 × move.l ／ 整個視窗</text>
+  <text x="470" y="360" fill="#666">tilemap 用線性索引指向 33×28＝924 張 tile，</text>
+  <text x="470" y="376" fill="#666">等於用 tilemap 硬體顯示一張點陣圖。</text>
+</svg>
