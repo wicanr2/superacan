@@ -311,10 +311,14 @@ frac  += increment; curr_addr += frac >> 16    | 16.16 相位累加
 MAME 的裝置結構有 `envelope[4]` 欄位並存進 save state，但 `sound_stream_update` 從來
 沒有用它。也就是說**這一層是 Bcan 自己加的，不是從 MAME 移植過來的**。
 
-後果有兩個。其一，本專案的音訊模型跟隨 MAME，沒有這層包絡，音色與 Bcan 會有差；
+參數來源已追出來：`$40` bit1 是包絡開關，`$A0/$B0/$C0/$D0` 分別是 attack、decay、
+第二段衰減、sustain 位準加 release，逐欄位語意見
+[sound-driver.md](sound-driver.md) §5.2。同時發現 `$E0` 的音量 nibble 在 Bcan 走的是
+非線性查表而非 MAME 的 ×17（§5.3），以及 key-off 會進 release 而不是立即停聲。
+
+後果有兩個。其一，本專案的音訊模型跟隨 MAME，這三項都沒有，音色與 Bcan 必然有差；
 其二，這推翻了「Bcan 對這些暫存器沒有語意」的既有推論（見
-[sound-driver.md](sound-driver.md) §6.1）。**哪些暫存器餵這台狀態機尚未追出來**，
-是下一個窄任務。
+[sound-driver.md](sound-driver.md) §6.1）。
 
 ## 5. 待查證
 
