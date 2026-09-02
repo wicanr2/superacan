@@ -1,30 +1,34 @@
 /* Super A'Can 知識庫．版面規範：層級用線條、留白與字級建立，不用卡片與色塊。
-   關鍵路徑色只有一個（鏽橙），其餘全部是同色相的明度階。 */
+   關鍵路徑色只有一個，其餘全部是同色相的明度階。
+
+   色系：press（書卷／編輯）——2026-09-02 從六組主題隨機抽出。
+   氣質是「從一臂之外讀一本書」：奶油紙、拉開的標題體量、一個濃郁主色（氧化血紅）
+   串起全篇。原主題要求襯線正文，但本站遵 rulebook/94「正文無襯線、標題可用克制襯線」，
+   只有 h1／h2 走襯線——中文技術文件夾雜大量暫存器名與十六進位，襯線正文會更難讀。 */
 
 :root {
-  --paper:      #faf8f5;
-  --ink:        #1c1a17;
-  --ink-2:      #55504a;   /* 次要說明 */
-  --ink-3:      #8b857c;   /* 輔助資訊、表頭 */
-  --rule:       #e2ddd4;   /* 細線 */
-  --rule-2:     #c4bdb1;   /* 較明顯的線 */
-  --key:        #9a4416;   /* 關鍵路徑：連結、當前位置 */
-  --key-quiet:  #7a3612;
-  --fill:       #f2eee7;   /* 程式碼與引用的淡填色 */
+  --paper:      #fbf7f0;   /* 奶油紙 */
+  --ink:        #221e1a;
+  --ink-2:      #57504a;   /* 次要說明 */
+  --ink-3:      #8a8078;   /* 輔助資訊、表頭 */
+  --rule:       #e5dcce;   /* 細線 */
+  --rule-2:     #c6b9a6;   /* 較明顯的線 */
+  --key:        #8c2f22;   /* 氧化血紅：連結、當前位置、章節識別 */
+  --key-quiet:  #6e241a;
+  --fill:       #f3ece0;   /* 程式碼與引用的淡填色 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper:  #16151300;
-    --paper:  #161513;
-    --ink:    #e8e3da;
-    --ink-2:  #a9a196;
-    --ink-3:  #7d766c;
-    --rule:   #2e2a25;
-    --rule-2: #454039;
-    --key:    #d3844f;
-    --key-quiet: #e0a077;
-    --fill:   #1e1c19;
+    --paper:  #171310;     /* 同一組語意換值，不另設計一套 */
+    --ink:    #ede4d6;
+    --ink-2:  #aba093;
+    --ink-3:  #7e756a;
+    --rule:   #2e271f;
+    --rule-2: #4a4034;
+    --key:    #d9705c;
+    --key-quiet: #e89179;
+    --fill:   #1f1a15;
   }
 }
 
@@ -53,6 +57,12 @@ body {
   font-size: 1rem;
   line-height: 1.95;                  /* 中文行高，1.5 會糊成一塊 */
   letter-spacing: .01em;
+}
+
+/* 書卷氣質靠標題的襯線與體量，不靠正文換字體。 */
+main h1, main h2 {
+  font-family: "Noto Serif TC", "Source Han Serif TC", "Songti TC", "Source Serif 4",
+               Georgia, "Times New Roman", serif;
 }
 
 code, kbd, pre, samp, .mono {
@@ -110,18 +120,18 @@ main {
 }
 
 main h1 {
-  font-size: 1.72rem;
-  font-weight: 660;
+  font-size: 2.1rem;
+  font-weight: 600;
   line-height: 1.5;
   letter-spacing: .01em;
   margin: 0 0 1.8rem;
   padding-bottom: .7rem;
-  border-bottom: 2px solid var(--rule-2);
+  border-bottom: 2px solid var(--key);   /* 全篇唯一的強調線，開篇一次 */
 }
 
 main h2 {
-  font-size: 1.3rem;
-  font-weight: 660;
+  font-size: 1.42rem;
+  font-weight: 600;
   line-height: 1.6;
   margin: 3.6rem 0 1.2rem;            /* 上方留白明顯大於下方 */
   padding-top: 1.1rem;
@@ -341,4 +351,23 @@ table code { font-size: .86em; }
   html { font-size: 16px; }
   main { padding-top: 2rem; }
   main h2 { margin-top: 2.8rem; }
+}
+
+/* ── 閱讀輔助 ─────────────────────────────────────────────── */
+
+/* 錨點跳轉不要讓標題貼在視窗頂端 */
+h1, h2, h3, h4 { scroll-margin-top: 2rem; }
+
+/* 雜湊、位址這類長字串在窄欄裡要能斷，不要逼整張表橫向捲 */
+td { overflow-wrap: anywhere; }
+td code { overflow-wrap: normal; }
+
+/* 鍵盤操作看得見焦點 */
+a:focus-visible, .toc a:focus-visible {
+  outline: 2px solid var(--key);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
 }
