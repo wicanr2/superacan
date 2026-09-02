@@ -74,9 +74,9 @@ warm_loop:
         bsr     wait_frame
         dbra    %d6,warm_loop
 
-        | 逐案例觸發 DMA，並把六個暫存器讀回 VRAM byte $C40 起（tile 49）
+        | 逐案例觸發 DMA，並把六個暫存器讀回 VRAM byte $D40 起（tile 53，讓 13 個案例的資料區都排得下）
         lea     cases,%a0
-        lea     VRAM+0xC40,%a2
+        lea     VRAM+0xD40,%a2
         move.w  count,%d7
 run_loop:
         lea     DMA0,%a1

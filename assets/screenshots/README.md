@@ -13,7 +13,7 @@
 | `spriteprobe-page3.png` | 同上，`--page 3`（mask 模式 16 種組合）| `ee1900297e9a38c2` |
 | `spriteprobe-page4.png` | 同上，`--page 4`（mask=1 的半透明分支）| `a68c0a4edb9ac3c1` |
 | `mosaicprobe-tile5.png` | 同上，`homebrew/mosaicprobe/ --layer tile --mosaic 5` | `9137f451e4123775` |
-| `dmaprobe.png` | 同上，`homebrew/dmaprobe/`，12 個 control 值 | `9b13c27b58547b88` |
+| `dmaprobe.png` | 同上，`homebrew/dmaprobe/`，12 個 control 值 | `5a28ff2b3c7394f5` |
 | `rich2demo-initial.png` | 本專案重製跑 `homebrew/rich2demo/ --art placeholder`，第 100 幀 | `b36f497354c69157` |
 | `rich2demo-moved.png` | 同上，擲兩次骰之後的第 400 幀 | `2c9c4c2796df3db8` |
 | `rich2demo-layout.svg` | 自繪示意圖 | — |

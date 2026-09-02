@@ -14,12 +14,14 @@
 
 ```sh
 python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
-python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --fault-case
+python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --extra-control 0x0001
+python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --extra-control 0x8800
 ```
 
-`--fault-case` 會多加一個沒有觸發位元的非零 control。反編譯顯示 Bcan 對它回錯誤碼，
-可能導致安全停機並讓整張截圖作廢，所以預設不含，要驗這條時單獨建一顆。
-Bcan 端的操作方式見 `../bit3probe/README.md`。
+`--extra-control` 追加第 13 個案例。沒有觸發位元的非零值（如 `$0001`）會讓 Bcan 停止
+整個工作階段、連截圖都產不出來，所以預設不含。**要把停機歸因給某個值，必須用合法值
+（如 `$8800`）建同樣有 13 個案例的映像做正對照**——否則分不出是那個值造成的，
+還是多一個案例本身讓版面出錯。Bcan 端的操作方式見 `../bit3probe/README.md`。
 
 ## 版面
 
@@ -39,5 +41,9 @@ Bcan 端的操作方式見 `../bit3probe/README.md`。
 ## 結果（2026-09-02）
 
 12 個案例的**搬移結果**在 Bcan 0.0.8b 與本專案 Linux 重製上完全相同（逐 byte）。
-唯一的差異是暫存器回讀：Bcan 一律回 0，本專案回推進後的實際值——Bcan 的讀取分派器
-對 `$E90020–$E9003F` 沒有 case，屬未實作。詳見 host-dma.md §5。
+整張畫面的差異只有 168 個像素，全部落在暫存器回讀那一欄與它的 tilemap wrap 複本：
+Bcan 一律回 0，本專案回推進後的實際值——Bcan 的讀取分派器對 `$E90020–$E9003F`
+沒有 case，屬未實作。詳見 host-dma.md §5。
+
+`--extra-control 0x0001` 的映像在 Bcan 上停止工作階段；同版面的 `0x8800` 正對照
+跑完並正常截圖，因此停機可以歸因給那個 control 值本身。

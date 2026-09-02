@@ -30,7 +30,7 @@ CASES = [
     (0x8801, "觸發 ＋ 未知低位元"),
     (0x9808, "word ＋ 未知低位元"),
 ]
-FAULT_CASE = (0x0001, "沒有觸發位元的非零值")
+EXTRA_NOTE = "追加案例"
 
 
 def deswap(data: bytes) -> bytes:
@@ -54,12 +54,15 @@ def make_pattern() -> bytes:
 
 
 def make_map(cases) -> bytes:
-    """每個案例佔一列：第 0–3 欄是目的區的四張 tile，第 5 欄是暫存器回讀。"""
+    """每個案例佔一列：第 0–3 欄是目的區的四張 tile，第 5 欄是暫存器回讀。
+
+    資料區最多用到 tile 52（13 個案例 × 4），所以回讀區從 tile 53 起，兩者不會撞號。
+    """
     entries = [[0] * 32 for _ in range(32)]
     for index in range(len(cases)):
         for column in range(4):
             entries[index][column] = 1 + index * 4 + column
-        entries[index][5] = 49 + index
+        entries[index][5] = 53 + index
     out = bytearray()
     for row in entries:
         for value in row:
@@ -79,14 +82,16 @@ def make_cases(cases) -> bytes:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--auth-rom", required=True)
-    ap.add_argument("--fault-case", action="store_true",
-                    help="追加一個沒有觸發位元的非零 control。反編譯顯示 Bcan 對它回錯誤碼，"
-                         "可能導致安全停機，因此預設不含")
+    ap.add_argument("--extra-control", default="",
+                    help="追加第 13 個案例的 control 值（如 0x0001）。沒有觸發位元的非零值"
+                         "會讓 Bcan 回錯誤碼並停止工作階段，因此預設不含；"
+                         "要歸因給某個值時記得用合法值做一次正對照")
     ap.add_argument("--image", default="acan-m68k:bookworm-v1")
     ap.add_argument("--out", default="")
     args = ap.parse_args()
-    cases = CASES + ([FAULT_CASE] if args.fault_case else [])
-    out_name = args.out or ("dmaprobe-fault.bin" if args.fault_case else "dmaprobe.bin")
+    extra = int(args.extra_control, 0) if args.extra_control else None
+    cases = CASES + ([(extra, EXTRA_NOTE)] if extra is not None else [])
+    out_name = args.out or (f"dmaprobe-{extra:04x}.bin" if extra is not None else "dmaprobe.bin")
 
     os.makedirs(BUILD, exist_ok=True)
     cart = deswap(open(args.auth_rom, "rb").read())
