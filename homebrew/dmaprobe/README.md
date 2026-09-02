@@ -14,9 +14,18 @@
 
 ```sh
 python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
+python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --channel 1
+python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --independence
 python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --extra-control 0x0001
 python3 build.py --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" --extra-control 0x8800
 ```
+
+`--channel 1` 把整組案例改跑在 `$E90030`。因為目的區與案例都一樣，**兩張截圖應該逐像素
+相同**——這個比對本身就是通道 1 的驗收條件，不必另外訂判準。
+
+`--independence` 換成三個案例，驗兩個通道的暫存器檔是不是分開的：先把通道 1 設好但
+control 寫 0，改用通道 0 搬一次，最後只寫通道 1 的 control。共用的話第三步會搬到通道 0
+的目的區。
 
 `--extra-control` 追加第 13 個案例。沒有觸發位元的非零值（如 `$0001`）會讓 Bcan 停止
 整個工作階段、連截圖都產不出來，所以預設不含。**要把停機歸因給某個值，必須用合法值
@@ -47,3 +56,9 @@ Bcan 一律回 0，本專案回推進後的實際值——Bcan 的讀取分派�
 
 `--extra-control 0x0001` 的映像在 Bcan 上停止工作階段；同版面的 `0x8800` 正對照
 跑完並正常截圖，因此停機可以歸因給那個 control 值本身。
+
+`--channel 1` 的畫面與通道 0 的版本在兩個模擬器上各自都是 0 個像素差；`--independence`
+的三列結果（16／8／0 個 byte）顯示兩個通道的暫存器檔是分開的，Bcan 與本專案相同。
+
+**搬移要花多久沒有量到**，兩個模擬器都是觸發即完成。可查的參考與收斂方式見
+[host-dma.md](../../docs/host-dma.md) §6。

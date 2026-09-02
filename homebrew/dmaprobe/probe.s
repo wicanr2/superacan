@@ -11,7 +11,7 @@
         .equ    VRAM,       0x00F40000
         .equ    VIDEO,      0x00F00000
         .equ    PALETTE,    0x00F00200
-        .equ    DMA0,       0x00E90020
+        .equ    DMABASE,    0x00E90000
 
         .text
         .org    0
@@ -75,17 +75,33 @@ warm_loop:
         dbra    %d6,warm_loop
 
         | 逐案例觸發 DMA，並把六個暫存器讀回 VRAM byte $D40 起（tile 53，讓 13 個案例的資料區都排得下）
+        |
+        | 每筆案例 8 個 word：flags、通道位移、source 高低、dest 高低、count、control。
+        | flags bit0 ＝ 只寫 control：用來驗證兩個通道的暫存器檔是分開的——先把通道 1
+        | 設好但不觸發，改用通道 0 搬一次，再單獨寫通道 1 的 control。若兩者共用暫存器，
+        | 第三步就會用到通道 0 的位址。
         lea     cases,%a0
         lea     VRAM+0xD40,%a2
         move.w  count,%d7
 run_loop:
-        lea     DMA0,%a1
-        move.w  (%a0)+,(%a1)            | source 高位
-        move.w  (%a0)+,2(%a1)           | source 低位
-        move.w  (%a0)+,4(%a1)           | dest 高位
-        move.w  (%a0)+,6(%a1)           | dest 低位
-        move.w  (%a0)+,8(%a1)           | count
-        move.w  (%a0)+,10(%a1)          | control（寫入即觸發）
+        movea.l #DMABASE,%a1
+        move.w  (%a0)+,%d5              | flags
+        adda.w  (%a0)+,%a1              | 通道位移（$20 或 $30）
+        move.w  (%a0)+,%d0              | source 高位
+        move.w  (%a0)+,%d1              | source 低位
+        move.w  (%a0)+,%d2              | dest 高位
+        move.w  (%a0)+,%d3              | dest 低位
+        move.w  (%a0)+,%d4              | count
+        move.w  (%a0)+,%d6              | control
+        btst    #0,%d5
+        bne     only_control
+        move.w  %d0,(%a1)
+        move.w  %d1,2(%a1)
+        move.w  %d2,4(%a1)
+        move.w  %d3,6(%a1)
+        move.w  %d4,8(%a1)
+only_control:
+        move.w  %d6,10(%a1)             | control（寫入即觸發）
         move.w  (%a1),(%a2)
         move.w  2(%a1),2(%a2)
         move.w  4(%a1),4(%a2)

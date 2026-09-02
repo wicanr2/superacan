@@ -177,6 +177,9 @@ Bcan 在寫入時就把部分 ROZ 暫存器換算成內部位址，倍率不一�
 - 每通道暫存器：source MSW/LSW、dest MSW/LSW、count、control；搬 `count + 1` 個單位。
 - control `& $8800` 不為 0 才觸發；`bit12`=word、`bit10`=dest 遞減、`bit9`=src 遞減、
   `bit8`=word 模式下 dest 每 16 byte 回捲；`$A800`（相等比對）是寫 0／byte 的特例分支。
+- 兩個通道的暫存器檔分開，行為相同（通道 1 的畫面與通道 0 逐像素相同）。
+- **搬移耗時未量到**：板級可確認 UM6619 接 68000 的 `BR/BG/BGACK`，所以 DMA 是會把
+  匯流排要走的 bus master；模式與週期數仍待查證，見 [host-dma.md](host-dma.md) §6。
 - 完整位元表、傳輸後的暫存器狀態、逐 byte 量測與一處回讀差異見
   [host-dma.md](host-dma.md)。
 - 另有 **sprite DMA**（UM6618 內部，`$F00010` 起）。

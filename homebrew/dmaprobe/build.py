@@ -70,18 +70,35 @@ def make_map(cases) -> bytes:
     return bytes(out)
 
 
+def region(index: int) -> int:
+    """第 index 個案例的目的位址：256 byte 區塊的正中央。"""
+    return VRAM_BASE + 64 + 256 * index + 128
+
+
 def make_cases(cases) -> bytes:
+    """每筆 8 個 word：flags、通道位移、source 高低、dest 高低、count、control。"""
     out = bytearray()
-    for index, (control, _) in enumerate(cases):
-        destination = VRAM_BASE + 64 + 256 * index + 128
-        out += struct.pack(">6H", PATTERN_ADDR >> 16, PATTERN_ADDR & 0xffff,
-                           destination >> 16, destination & 0xffff, COUNT, control)
+    for index, case in enumerate(cases):
+        control, _note = case[0], case[1]
+        channel = case[2] if len(case) > 2 else 0
+        flags = case[3] if len(case) > 3 else 0
+        source = case[4] if len(case) > 4 else PATTERN_ADDR
+        destination = case[5] if len(case) > 5 else region(index)
+        count = case[6] if len(case) > 6 else COUNT
+        out += struct.pack(">8H", flags, 0x20 + 0x10 * channel,
+                           source >> 16, source & 0xffff,
+                           destination >> 16, destination & 0xffff, count, control)
     return bytes(out)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--auth-rom", required=True)
+    ap.add_argument("--channel", type=int, choices=(0, 1), default=0,
+                    help="把整組案例改跑在哪一個通道（$E90020 或 $E90030）")
+    ap.add_argument("--independence", action="store_true",
+                    help="改成三個案例：先設好通道 1 但不觸發，用通道 0 搬一次，"
+                         "再單獨寫通道 1 的 control。兩個通道若共用暫存器檔，第三步會用錯位址")
     ap.add_argument("--extra-control", default="",
                     help="追加第 13 個案例的 control 值（如 0x0001）。沒有觸發位元的非零值"
                          "會讓 Bcan 回錯誤碼並停止工作階段，因此預設不含；"
@@ -90,8 +107,20 @@ def main() -> int:
     ap.add_argument("--out", default="")
     args = ap.parse_args()
     extra = int(args.extra_control, 0) if args.extra_control else None
-    cases = CASES + ([(extra, EXTRA_NOTE)] if extra is not None else [])
-    out_name = args.out or (f"dmaprobe-{extra:04x}.bin" if extra is not None else "dmaprobe.bin")
+    if args.independence:
+        # 通道 1 指向第 0 塊、搬 16 個 byte；通道 0 指向第 1 塊、只搬 8 個。
+        cases = [
+            (0x0000, "通道 1 設定但不觸發", 1, 0, PATTERN_ADDR, region(0), 15),
+            (0x8800, "通道 0 搬 8 個 byte", 0, 0, PATTERN_ADDR, region(1), 7),
+            (0x8800, "只寫通道 1 的 control", 1, 1, 0, 0, 0),
+        ]
+        out_name = args.out or "dmaprobe-independence.bin"
+    else:
+        cases = [(control, note, args.channel) for control, note in CASES]
+        cases += [(extra, EXTRA_NOTE, args.channel)] if extra is not None else []
+        suffix = f"-ch{args.channel}" if args.channel else ""
+        suffix += f"-{extra:04x}" if extra is not None else ""
+        out_name = args.out or f"dmaprobe{suffix}.bin"
 
     os.makedirs(BUILD, exist_ok=True)
     cart = deswap(open(args.auth_rom, "rb").read())
@@ -106,10 +135,11 @@ def main() -> int:
     open(os.path.join(BUILD, "cases.bin"), "wb").write(make_cases(cases))
     open(os.path.join(BUILD, "count.inc"), "w").write(f"        .word   {len(cases) - 1}\n")
 
-    print(f"{len(cases)} 個案例，每個搬 {COUNT + 1} 個單位")
-    print("列 control 說明")
-    for index, (control, note) in enumerate(cases):
-        print(f"{index:2d} ${control:04X} {note}")
+    print(f"{len(cases)} 個案例")
+    print("列 通道 control 說明")
+    for index, case in enumerate(cases):
+        channel = case[2] if len(case) > 2 else 0
+        print(f"{index:2d}   ch{channel} ${case[0]:04X} {case[1]}")
 
     uid = f"{os.getuid()}:{os.getgid()}"
     cmd = [
