@@ -1,5 +1,18 @@
 # 工作歷程
 
+## 2026-09-02：`$F001F0` bit 4 定案，pixel mode 四個位元全部有結論
+
+- 新增 `homebrew/pixelmodeprobe/`：同一個 ROZ 8bpp 場景，每 300 幀把 `$F001F0` 換成
+  `$02`／`$0A`／`$12`／`$1A`，量 bit 4 做不做事。
+- 結果：**只有 pixel mode 恰為 `$08` 會走 bitmap 路徑**。`$10` 與 `$18` 都回到 tilemap，
+  所以 bit 4 沒有獨立效果，只是 bit 3 的排他條件。Bcan 與本專案產生的四張畫面完全相同。
+- 至此 `$F001F0` 四個欄位都有定論：bits 0–2 gfx mode（同 MAME）、bit 3 ROZ 的
+  tilemap／bitmap 切換、bit 4 只作排他條件。direct-color 假說再被削弱一層
+  （docs/palette-dac.md）。
+- 探針設計上的一點：**相位標示要挑「在所有相位都看得見」的位置**。第一版只改 backdrop
+  （調色盤索引 0），但 ROZ 蓋滿整個畫面時 backdrop 一個像素都沒露出來，四個相位分不開。
+  改成同時寫索引 0 與索引 255（地圖中央的標示方塊）才量得出來。
+
 ## 2026-09-02：驗證矩陣，以及第四層／window 1 的斷言訂正
 
 - 新增 [`tools/verify_matrix.py`](tools/verify_matrix.py) 與

@@ -83,6 +83,9 @@ direct-color 通常需要多個 PCLK 或特殊 multiplexing；真正 framing 必
   也就是說，在唯一實作它的程式裡，bit 3 是 ROZ 的 tilemap／bitmap 切換，不是全域
   direct color。這削弱本假說，但因為 Bcan 的解讀同樣沒有硬體佐證，兩者都要靠實機訊號
   才能定案。
+- **bit 4 已量測**：`homebrew/pixelmodeprobe/` 四相位掃描顯示 bit 4 沒有獨立效果，
+  只是 bit 3 的排他條件（pixel mode 必須恰為 `$08`）。兩個位元都沒有全域色彩作用，
+  本假說再被削弱一層。
 - **未知**：UM70C188 command registers、multiplexing，以及正式遊戲是否使用特殊模式。
 
 ## 6. 本地 ROM producer 掃描（a，靜態）
