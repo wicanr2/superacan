@@ -1,0 +1,59 @@
+{
+  "original": {
+    "exported": {
+      "board.json": "963b154c3aff8ba8e58017be709ea7ee06a417649026e0e9134da413de34735e",
+      "layers.json": "c1a86a293bd76f7b91b880f09c1cf2a62c9207debc4351242f9c58feb62c084d",
+      "maptiles.bin": "cdf672094f3adbafc5c118c1194034ce1e7c1594f4324a09d046b4a9a058d139",
+      "palette.bin": "7923ca51f1fb3dccacf2a45f1938cd203f1c81f8e9de2334b94d28b9aadc40d2"
+    },
+    "generated": {
+      "auth.bin": "6bc59e18d2ac941a4189cb84718165f36f0768f12efced93044886a6e6f21c90",
+      "maptiles.bin": "cdf672094f3adbafc5c118c1194034ce1e7c1594f4324a09d046b4a9a058d139",
+      "palette.bin": "f8bf2579f86e7d7681dee8e4b8afa1af9b98c562a94025f786eac4cb9d3d615b",
+      "sounddrv.bin": "ebb4dd0aeec5d53ff69131542dd0648cb9343a075dd83abb1ca5b3edefd91e1f",
+      "squares.bin": "c7fa6f6a73181bf339dc157262b85c70cc2387860fa0d58e81f12841eb18cc4a",
+      "terrain.bin": "99b5b09b36f3b9b91d3c2fcb83e8aac1f57968305644a679a0717c82e4a998c7",
+      "token.bin": "99f1507eaad7b0fd582dcbc81ee82a7bf65482a22587b8cf145f9677b826edf7"
+    },
+    "inputs": {
+      "256.PAT": "c3600adba2f036d22f0ac94bfe5a08d9a9b9c8815d56cbfc76525b6a4ea1a116",
+      "Boom Zoo (Taiwan).bin": "090827d00ef8047d2c78cc173d258565b1c3ab01f0d97dc3ed8e08833d370077",
+      "PART1.PAK": "3114e5bcf6732410149729e0a641dc55cca33dcd557b3a35b75ee77bc1c2a7a9",
+      "SAVE_2.DSK": "a443f028da9ec77736a37e4d3b7c4dbc65cfc710b2b00f6bd479a6df96836771"
+    },
+    "rom": {
+      "name": "rich2demo.bin",
+      "sha256": "532f22c1c984c428d3fb43ff5e7b6db47999a43ea2176c1b83ae9e5f02a62960",
+      "size": 1048576
+    }
+  },
+  "placeholder": {
+    "exported": {
+      "board.json": "963b154c3aff8ba8e58017be709ea7ee06a417649026e0e9134da413de34735e",
+      "layers.json": "c1a86a293bd76f7b91b880f09c1cf2a62c9207debc4351242f9c58feb62c084d",
+      "maptiles.bin": "cdf672094f3adbafc5c118c1194034ce1e7c1594f4324a09d046b4a9a058d139",
+      "palette.bin": "7923ca51f1fb3dccacf2a45f1938cd203f1c81f8e9de2334b94d28b9aadc40d2"
+    },
+    "generated": {
+      "auth.bin": "6bc59e18d2ac941a4189cb84718165f36f0768f12efced93044886a6e6f21c90",
+      "maptiles.bin": "328b5d43c7e62388087e18e31253c7224bfacb685095428d2504c942ec33c93d",
+      "palette.bin": "ccc8da205feaf5250580cd70ecdfe59856de09fc43c50947cbfbce7a58e40d17",
+      "sounddrv.bin": "ebb4dd0aeec5d53ff69131542dd0648cb9343a075dd83abb1ca5b3edefd91e1f",
+      "squares.bin": "c7fa6f6a73181bf339dc157262b85c70cc2387860fa0d58e81f12841eb18cc4a",
+      "terrain.bin": "99b5b09b36f3b9b91d3c2fcb83e8aac1f57968305644a679a0717c82e4a998c7",
+      "token.bin": "792e427ab05baa10c5b0bcf196a114ee41fb1bd33f59e065539e07634a8f6d43"
+    },
+    "inputs": {
+      "256.PAT": "c3600adba2f036d22f0ac94bfe5a08d9a9b9c8815d56cbfc76525b6a4ea1a116",
+      "Boom Zoo (Taiwan).bin": "090827d00ef8047d2c78cc173d258565b1c3ab01f0d97dc3ed8e08833d370077",
+      "PART1.PAK": "3114e5bcf6732410149729e0a641dc55cca33dcd557b3a35b75ee77bc1c2a7a9",
+      "SAVE_2.DSK": "a443f028da9ec77736a37e4d3b7c4dbc65cfc710b2b00f6bd479a6df96836771"
+    },
+    "rom": {
+      "name": "rich2demo-placeholder.bin",
+      "sha256": "93e86125ba40635c581cca281bb7ac4480319571a1c5bcf5a0f0a3511b04365b",
+      "size": 1048576
+    }
+  },
+  "說明": "rich2demo 重現鏈的雜湊。版權檔案不進版控，雜湊可以。"
+}

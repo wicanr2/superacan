@@ -45,6 +45,21 @@ Bcan 模擬器與遊戲音效驅動研究，作為後續模擬器與遊戲乾淨
 此照片可辨認板上的 UM6618、UM6619 與 Motorola MC68HC000P10 等元件，但晶片外觀本身不證明
 暫存器語意；功能結論仍以反編譯、ROM／BIOS 實測及 MAME 實作交叉驗證為準。
 
+## 自製卡帶
+
+![大富翁2 台灣棋盤 demo](assets/screenshots/rich2demo-initial.png)
+![擲骰移動後視窗重新置中](assets/screenshots/rich2demo-moved.png)
+
+`homebrew/rich2demo/` 把《大富翁2》台灣棋盤做成可跑的 Super A'Can 卡帶：原版的 11×11
+地圖視窗、按 A 擲骰、棋子沿道路網移動、岔路可用方向鍵指定。上面兩張是佔位美術模式
+（`--art placeholder`）的畫面——棋盤版面仍是原版道路網，但每個像素的顏色都由建置腳本
+生成，131 種地形各配一色加格線；原版美術模式的畫面只留本機。左圖與 Bcan 0.0.8b 跑同一顆
+映像逐像素相同。
+
+另有兩顆量測用卡帶：`homebrew/bit3probe/` 解出 `$F001F0` bit 3 是 ROZ 的 tilemap／bitmap
+切換，`homebrew/spriteprobe/` 解出 sprite 表的縮放與 mosaic 欄位。三顆的截圖判讀見
+[測試結果截圖說明](docs/test-screenshots.md)。
+
 ## 目前狀態
 
 - 68k IPL、UMC6650 交握、卡帶授權區與跳轉流程已完成分析。

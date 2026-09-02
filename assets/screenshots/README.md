@@ -10,11 +10,16 @@
 | `bit3probe-bitmap.png` | 同上，bit 3 = 1 | `eae40c77c0b6e8b0` |
 | `spriteprobe-page1.png` | Bcan 0.0.8b F8 截圖，`homebrew/spriteprobe/ --page 1` | `c9eedb998bd9ed72` |
 | `spriteprobe-page2.png` | 同上，`--page 2` | `f0747610ec2e7f53` |
+| `rich2demo-initial.png` | 本專案重製跑 `homebrew/rich2demo/ --art placeholder`，第 100 幀 | `b36f497354c69157` |
+| `rich2demo-moved.png` | 同上，擲兩次骰之後的第 400 幀 | `2c9c4c2796df3db8` |
 | `rich2demo-layout.svg` | 自繪示意圖 | — |
 
 四張 PNG 的像素內容與本專案 Linux 重製的輸出逐像素相同；檔案位元組不同是兩邊 PNG
 編碼器的差異，不是畫面差異。
 
-**不收**：`homebrew/rich2demo/` 的任何截圖。那些畫面是《大富翁2》的原版地圖圖磚與調色盤，
-屬受版權保護的美術，只能留在本機。示意圖 `rich2demo-layout.svg` 是自繪的版面說明，
-不含原版像素。
+`rich2demo-initial.png` 的畫面與 Bcan 0.0.8b 跑同一顆映像逐像素相同（相異 0／76,800）。
+
+**不收**：`homebrew/rich2demo/ --art original` 的任何截圖。那個模式畫的是《大富翁2》的
+原版地圖圖磚與調色盤，屬受版權保護的美術，只能留在本機。這裡收的兩張是
+`--art placeholder`：棋盤版面仍然是原版的道路網，但**每一個像素的顏色都由 `build.py`
+生成**，131 種地形各配一色加一圈格線，不含任何原版美術。

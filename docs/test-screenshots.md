@@ -16,7 +16,26 @@
 
 ## 2. 大富翁2 棋盤 demo（`homebrew/rich2demo/`）
 
-### 2.1 畫面構成
+### 2.1 兩種美術模式
+
+`build.py --art` 決定畫面用什麼圖塊，兩者跑的是同一份程式與同一份棋盤資料：
+
+| 模式 | 圖塊來源 | 截圖能不能進版控 |
+|---|---|---|
+| `original`（預設）| `PART1.PAK` 的 131 張原版圖磚＋`256.PAT` | 不行，畫面是原版美術 |
+| `placeholder` | `build.py` 生成：131 種地形各一色，加一圈格線 | 可以，每個像素都是自己畫的 |
+
+下面兩張是 `placeholder` 模式。棋盤版面仍然是原版的道路網——同一種地形連成色塊，
+所以道路、街廓與水域的分佈讀得出來——但沒有任何一個像素來自原版美術。
+
+| 初始畫面（第 100 幀）| 擲兩次骰之後（第 400 幀）|
+|---|---|
+| ![初始畫面](../assets/screenshots/rich2demo-initial.png) | ![移動後](../assets/screenshots/rich2demo-moved.png) |
+| 棋子（白）在中心格，視窗以起始格為中心 | 視窗跟著棋子重新置中，看到棋盤的另一區 |
+
+左圖與 Bcan 0.0.8b 跑同一顆映像**逐像素相同**（相異 0／76,800）。
+
+### 2.2 畫面構成
 
 ![rich2demo 的畫面構成](../assets/screenshots/rich2demo-layout.svg)
 
@@ -27,7 +46,7 @@ A'Can 的 tile 是 8×8，而原版地圖圖磚是 24×20，高度不整除。�
 就排成 924 張 8×8 packed 8bpp tile，tilemap 用線性索引指過去——等於用 tilemap 硬體顯示
 一張點陣圖。24 是 8 的倍數，來源每一列因此正好落在三張相鄰 tile 的同一列上。
 
-### 2.2 三組截圖分別在證明什麼
+### 2.3 三組截圖分別在證明什麼
 
 | 截圖 | 產生方式 | 該看哪裡 | 結論 |
 |---|---|---|---|
@@ -41,22 +60,33 @@ A'Can 的 tile 是 8×8，而原版地圖圖磚是 24×20，高度不整除。�
 A'Can 調色盤是 xBGR555，原版是 8-bit VGA；不量化的話 58,080 個像素會有 36,677 個「不同」，
 全是量化誤差，看起來像整張圖都錯。
 
-### 2.3 為什麼這幾張不進版控
+### 2.4 原版美術模式的截圖為什麼不進版控
 
-rich2demo 的畫面是《大富翁2》的原版地圖圖磚與調色盤，屬於受版權保護的美術。
-**截圖與 ROM 產物一律只留在本機**，`.gitignore` 已排除 `homebrew/*/build/`。
-本節改以自繪示意圖＋量測數字承載結論；要看畫面請在本機自行建置重現。
+`--art original` 的畫面是《大富翁2》的原版地圖圖磚與調色盤，屬於受版權保護的美術。
+**該模式的截圖與所有 ROM 產物一律只留在本機**，`.gitignore` 已排除 `homebrew/*/build/`。
+版控裡改放三樣可重跑的東西：`--art placeholder` 的截圖、自繪的版面示意圖，以及
+`manifest.json`——它記下整條重現鏈（原版輸入 → 匯出素材 → 中間產物 → 卡帶映像）的
+SHA-256。版權檔案本身不進版控，雜湊可以：任何人拿自己的合法原版重跑，`build.py`
+會直接核對出位元是否相同。
 
-### 2.4 在本機重現
+### 2.5 在本機重現
 
 ```sh
-# 1) 由 rich2 專案匯出素材（board.json / layers.json / maptiles.bin / palette.bin）
-# 2) 組卡帶
-python3 homebrew/rich2demo/build.py --assets <匯出目錄> \
-    --auth-rom "Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
+# 1) 匯出素材。Go 的 internal 套件不能跨模組 import，所以把 rich2 複製成暫時模組再跑。
+mkdir -p /tmp/r2mod/cmd/dump
+cp ~/cht/rich2/{go.mod,go.sum} /tmp/r2mod/
+cp -r ~/cht/rich2/internal /tmp/r2mod/internal
+cp homebrew/rich2demo/export/main.go /tmp/r2mod/cmd/dump/main.go
+cd /tmp/r2mod && go run ./cmd/dump <RICH2 目錄> /tmp/r2out SAVE_2.DSK
+
+# 2) 組卡帶。有 manifest.json 時會自動核對雜湊，不符就以非零離開。
+python3 homebrew/rich2demo/build.py --assets /tmp/r2out \
+    --auth-rom "Bcan008b/ROMS/Boom Zoo (Taiwan).bin" \
+    --orig <RICH2 目錄> --art placeholder
+
 # 3) 本專案端取圖
-acan-headless --rom homebrew/rich2demo/build/rich2demo.bin --frames 1200 \
-    --press "60:A,300:A,600:A" --screenshot-dir out --screenshot-every 100
+acan-headless --rom homebrew/rich2demo/build/rich2demo-placeholder.bin --frames 600 \
+    --press "60:A,300:A" --screenshot-dir out --screenshot-every 100
 ```
 
 Bcan 端把 `.bin` 複製進 `ROMS\`，用 `檔案(F)` → 第一項 → 輸入完整路徑載入，按 F8 取圖。

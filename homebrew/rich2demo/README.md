@@ -4,6 +4,15 @@
 按 A 擲骰，棋子沿道路網移動，岔路可用方向鍵指定走哪一條、一秒不指定就照原版的做法
 隨機挑。畫面在 Bcan 0.0.8b 與本機 Linux 重製上都跑得起來。
 
+![佔位美術模式的畫面](../../assets/screenshots/rich2demo-initial.png)
+
+## 兩種美術模式
+
+`--art original`（預設）用原版的 131 張 24×20 圖磚與 `256.PAT` 調色盤；
+`--art placeholder` 改用 `build.py` 生成的圖塊——131 種地形各一色加一圈格線。
+兩者跑同一份程式與同一份棋盤資料，差別只在畫面素材。上圖是佔位模式，
+它的截圖可以進版控，原版模式的不行。
+
 ## 版權邊界
 
 三種版權輸入都在建置時從**使用者自己的檔案**取得，產物 `build/*.bin` 因此含有版權資料：
@@ -17,15 +26,19 @@
 
 ## 建置
 
-素材先由 rich2 專案匯出（該專案的 `internal/assets` 已有完整解析器），再交給本目錄：
+素材由 `export/main.go` 從原版檔案匯出——它直接呼叫 rich2 專案 `internal/assets` 的
+解析器，不重寫格式解讀。因為 Go 的 internal 套件不能跨模組 import，執行方式是把 rich2
+複製成一份暫時模組（步驟寫在 `export/main.go` 開頭）。
 
 ```sh
-# 1) 匯出素材：board.json / layers.json / maptiles.bin / palette.bin
-#    以 rich2 模組內的一支小程式呼叫 assets.ParseBoard / ParseMapLayers /
-#    DecodeMapTiles / ParsePalette 即可（internal 套件不能從模組外 import）。
-# 2) 組出卡帶
-python3 build.py --assets <匯出目錄> --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin"
+python3 build.py --assets <匯出目錄> \
+    --auth-rom "../../Bcan008b/ROMS/Boom Zoo (Taiwan).bin" \
+    --orig <RICH2 目錄> --art placeholder
 ```
+
+`manifest.json` 記下整條重現鏈的 SHA-256：原版輸入、匯出素材、中間產物、卡帶映像。
+建置時會自動核對，不符就以非零離開；要改記錄用 `--write-manifest`。版權檔案不進版控，
+雜湊可以——拿自己的合法原版重跑，能直接確認位元是否相同。
 
 工具鏈是 `acan-m68k:bookworm-v1`（Debian `binutils-m68k-linux-gnu`），與
 `../bit3probe/README.md` 同一個映像。
