@@ -266,6 +266,56 @@ BCAN_CHT_1
 - 工作記憶體金手指寫入路徑會直接改 SystemBus 內的 Work RAM 副本
   （+69672），不做 bus 模擬。
 
+### 4.7 音訊輸出管線（2026-09-02）
+
+Bcan 的聲音走的是最傳統的路徑：**WINMM 的 `waveOut`**，不是 XAudio2 也不是 WASAPI。
+匯入表只有 `waveOutOpen/Pause/PrepareHeader/Write/Reset/Restart/Unprepare/Close`；
+Media Foundation（`MFPlat`／`MFReadWrite`）只用在 MP4 錄影，與即時播放無關。
+
+| 項目 | 值 | 來源 |
+|---|---|---|
+| 輸出格式 | PCM、立體聲、**48000 Hz**、16-bit（`WAVEFORMATEX` 常數 `xmmword_14040C860`）| 反編譯 |
+| 裝置 | `WAVE_MAPPER`，callback 型態 `CALLBACK_EVENT`（`0x50000`）| `sub_140071C40` |
+| 緩衝 | **18 個 `WAVEHDR`**，每個 1024 byte ＝ 256 個取樣 ＝ 5.33 ms | 同上 |
+| 佇列深度 | 18 × 5.33 ms ≈ **96 ms** | 計算 |
+| 環形緩衝 | `0x2000` 個取樣（32 KiB）≈ 170 ms，讀指標遮 `& 0x1FFF` | `sub_140073080` |
+| 送出條件 | 環形緩衝存量 > 255 才送一個 1024 byte 區塊 | 同上 |
+
+合成端在 **44744 Hz**（UM6619 原生率 `clock/80` 取整）產生，再由一個
+44744 → 48000 的重取樣器轉換；`sub_14009AD80` 對這組數字有專用快速路徑
+（`rate == 44744 && out == 48000` 的條件判斷直接寫在碼裡）。
+
+### 4.8 混音器有 MAME 沒有的包絡產生器（2026-09-02）
+
+`sub_1400A80B0` 是每取樣的混音迴圈，前半段與 MAME `umc6619_sound.cpp` 的模型一致：
+
+```text
+sample = (ram[curr_addr] << 8) − 0x8000        | 無號 8-bit → 有號 16-bit
+left  += (sample × volume_l) >> 8
+right += (sample × volume_r) >> 8
+frac  += increment; curr_addr += frac >> 16    | 16.16 相位累加
+```
+
+`(u << 8) − 0x8000` 與 MAME 的 `(int16_t)((u + 0x80) << 8)` 逐值等價。
+
+**但 Bcan 多了一層**：通道結構的狀態位元組（channel + 60）不為 0 時，左右聲道再乘上一個
+24 位元小數增益（`(gain × value) >> 24`），而且每個取樣都呼叫 `sub_1400A8880` 更新它。
+那支函式是一台狀態機：
+
+| 狀態 | 行為 |
+|---|---|
+| 1 | 由起始值線性插值到目標值，走完 `duration` 個取樣後轉態 |
+| 2 | 同上但曲線是平方（`(t² ) >> 24`），近似指數起音／衰減 |
+| 4、5 | 每取樣乘一個固定比例（幾何衰減），降到 `0x10000` 以下結束 |
+
+MAME 的裝置結構有 `envelope[4]` 欄位並存進 save state，但 `sound_stream_update` 從來
+沒有用它。也就是說**這一層是 Bcan 自己加的，不是從 MAME 移植過來的**。
+
+後果有兩個。其一，本專案的音訊模型跟隨 MAME，沒有這層包絡，音色與 Bcan 會有差；
+其二，這推翻了「Bcan 對這些暫存器沒有語意」的既有推論（見
+[sound-driver.md](sound-driver.md) §6.1）。**哪些暫存器餵這台狀態機尚未追出來**，
+是下一個窄任務。
+
 ## 5. 待查證
 
 - `.rsrc` 中 616 KB 資源的實際內容（字型？UI 圖？）。
